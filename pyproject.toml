@@ -17,6 +17,7 @@ structlog = "^24.1.0"
 pyjwt = "^2.8.0"
 passlib = "^1.7.4"
 argon2-cffi = "^23.1.0"
+prometheus-client = "^0.20.0"
 
 
 [tool.poetry.group.dev.dependencies]

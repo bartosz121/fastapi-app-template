@@ -9,10 +9,12 @@ from todo_api.auth.service import AuthService
 from todo_api.core import exception_handlers
 from todo_api.core.config import settings
 from todo_api.core.database.base import session_factory
+from todo_api.core.middleware import prometheus as prometheus_middleware
 from todo_api.core.middleware.authentication import (
     AuthenticationBackend,
     AuthenticationMiddleware,
 )
+from todo_api.metrics import router as metrics_router
 from todo_api.todos.router import router as todos_router
 from todo_api.users.router import router as users_router
 
@@ -29,14 +31,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 
 def create_app() -> FastAPI:
     log.info("hello")
-    app = FastAPI(lifespan=lifespan, debug=settings.ENVIRONMENT.is_qa)
+    app = FastAPI(lifespan=lifespan)
     exception_handlers.configure_exception_handlers(app)
 
+    app.add_middleware(prometheus_middleware.PrometheusMiddleware)
     app.add_middleware(
         AuthenticationMiddleware,
         backend=AuthenticationBackend(AuthService(), session_factory),
     )
 
+    app.include_router(metrics_router)
     app.include_router(users_router, prefix="/api/v1")
     app.include_router(todos_router, prefix="/api/v1")
 

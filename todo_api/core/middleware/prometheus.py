@@ -2,6 +2,7 @@ import time
 
 from prometheus_client import Counter, Gauge, Histogram
 from starlette.requests import Request
+from starlette.routing import Match
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 REQUESTS = Counter(
@@ -38,6 +39,14 @@ class PrometheusMiddleware:
     def __init__(self, app: ASGIApp):
         self.app = app
 
+    @staticmethod
+    def get_route_path_string(request: Request) -> str:
+        for route in request.app.routes:
+            match, _ = route.matches(request.scope)
+            if match == Match.FULL:
+                return route.path
+        return request.url.path
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         t0 = time.process_time()
 
@@ -51,7 +60,7 @@ class PrometheusMiddleware:
 
         request = Request(scope)
         method = request.method
-        path = request.url.path
+        path = self.get_route_path_string(request)
 
         REQUESTS_IN_PROGRESS.labels(method=method, path=path).inc()
         REQUESTS.labels(method=method, path=path).inc()

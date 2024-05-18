@@ -1,3 +1,4 @@
+import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, TypedDict
 
@@ -10,6 +11,7 @@ from todo_api.core import exception_handlers
 from todo_api.core.config import settings
 from todo_api.core.database.base import session_factory
 from todo_api.core.middleware import prometheus as prometheus_middleware
+from todo_api.core.middleware import request_id as request_id_middleware
 from todo_api.core.middleware.authentication import (
     AuthenticationBackend,
     AuthenticationMiddleware,
@@ -34,6 +36,11 @@ def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     exception_handlers.configure_exception_handlers(app)
 
+    app.add_middleware(
+        request_id_middleware.RequestIdMiddleware,
+        header_name="x-request-id",
+        id_factory=lambda _: str(uuid.uuid4()),
+    )
     app.add_middleware(prometheus_middleware.PrometheusMiddleware)
     app.add_middleware(
         AuthenticationMiddleware,

@@ -1,8 +1,8 @@
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Any, Generic, Iterable, Literal, TypeVar, cast
+from typing import Any, Generic, Iterable, Literal, NamedTuple, TypeVar, cast
 
-from sqlalchemy import Column, Select, select
+from sqlalchemy import Column, Select, asc, desc, select
 from sqlalchemy import func as sqla_func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -14,6 +14,11 @@ from todo_api.core.service.exceptions import (
 )
 
 log = getLogger(__name__)
+
+
+class OrderByBase(NamedTuple):
+    field: str
+    order: Literal["asc", "desc"]
 
 
 @contextmanager
@@ -35,6 +40,9 @@ def sql_error_handler():
 T = TypeVar("T")
 U = TypeVar("U")
 SelectT = TypeVar("SelectT", bound=Select[Any])
+
+# List of kwargs which we don;t want to touch when "_where_from_kwargs" runs
+RESERVED_KWARGS = {"offset", "limit", "order_by"}
 
 
 class SQLAlchemyService(Generic[T, U]):
@@ -113,7 +121,47 @@ class SQLAlchemyService(Generic[T, U]):
         self, statement: Select[tuple[T]], **kwargs: Any
     ) -> Select[tuple[T]]:
         for k, v in kwargs.items():
-            statement = statement.where(getattr(self.model, k) == v)
+            if k not in RESERVED_KWARGS:
+                statement = statement.where(getattr(self.model, k) == v)
+        return statement
+
+    def _offset_from_kwargs(
+        self, statement: Select[tuple[T]], **kwargs: Any
+    ) -> Select[tuple[T]]:
+        if offset := kwargs.get("offset"):
+            statement = statement.offset(offset)
+        return statement
+
+    def _limit_from_kwargs(
+        self, statement: Select[tuple[T]], **kwargs: Any
+    ) -> Select[tuple[T]]:
+        if limit := kwargs.get("limit"):
+            statement = statement.limit(limit)
+        return statement
+
+    def _paginate_from_kwargs(
+        self, statement: Select[tuple[T]], **kwargs: Any
+    ) -> Select[tuple[T]]:
+        statement = self._offset_from_kwargs(statement, **kwargs)
+        statement = self._limit_from_kwargs(statement, **kwargs)
+        return statement
+
+    def _order_by_from_kwargs(
+        self, statement: Select[tuple[T]], **kwargs: Any
+    ) -> Select[tuple[T]]:
+        if order_by := kwargs.get("order_by"):
+            if not isinstance(order_by, OrderByBase):
+                raise ServiceError("order_by argument is not of expected type")
+
+            if order_by.order == "asc":
+                statement = statement.order_by(
+                    asc(getattr(self.model, order_by.field)),
+                )
+            else:
+                statement = statement.order_by(
+                    desc(getattr(self.model, order_by.field))
+                )
+
         return statement
 
     def check_not_found(self, item: T | None) -> T:
@@ -191,15 +239,6 @@ class SQLAlchemyService(Generic[T, U]):
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> T:
-        """
-        Get one record from the table. Optionally filter by kwargs.
-
-        Args:
-            id (U): The ID of the record to get.
-
-        Returns:
-            T: The record.
-        """
         with sql_error_handler():
             statement = self._get_statement(statement)
             statement = self._where_from_kwargs(statement, **kwargs)
@@ -215,15 +254,6 @@ class SQLAlchemyService(Generic[T, U]):
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> T | None:
-        """
-        Get one or none records from the table. Optionally filter by kwargs.
-
-        Args:
-            id (U): The ID of the record to get.
-
-        Returns:
-            T | None: The record.
-        """
         with sql_error_handler():
             statement = self._get_statement(statement)
             statement = self._where_from_kwargs(statement, **kwargs)
@@ -239,18 +269,11 @@ class SQLAlchemyService(Generic[T, U]):
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> list[T]:
-        """
-        List records from the table. Optionally filter by kwargs.
-
-        Args:
-            **kwargs (Any): The kwargs to filter by.
-
-        Returns:
-            list[T]: The records.
-        """
         with sql_error_handler():
             statement = self._get_statement(statement)
             statement = self._where_from_kwargs(statement, **kwargs)
+            statement = self._paginate_from_kwargs(statement, **kwargs)
+            statement = self._order_by_from_kwargs(statement, **kwargs)
 
             items = list((self.session.execute(statement)).scalars())
             for item in items:
@@ -264,23 +287,17 @@ class SQLAlchemyService(Generic[T, U]):
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> tuple[list[T], int]:
-        """
-        List records from the table. Optionally filter by kwargs.
-
-        Args:
-            **kwargs (Any): The kwargs to filter by.
-
-        Returns:
-            tuple[list[T], int]: The records and the count of the records.
-        """
         statement = self._get_statement(statement)
         statement = self._where_from_kwargs(statement, **kwargs)
+        statement = self._paginate_from_kwargs(statement, **kwargs)
+        statement = self._order_by_from_kwargs(statement, **kwargs)
+
         count_statement = statement.with_only_columns(sqla_func.count()).select_from(
             self.model
         )
 
         with sql_error_handler():
-            count_result = (self.session.execute(count_statement)).scalar_one()
+            count_result = (self.session.execute(count_statement)).scalar() or 0
             items = list((self.session.execute(statement)).scalars())
 
             for item in items:

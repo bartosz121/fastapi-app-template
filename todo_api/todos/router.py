@@ -1,21 +1,42 @@
+from enum import Enum
+
 from fastapi import APIRouter, Response, status
 
-from todo_api.core import exceptions
+from todo_api.core import exceptions, pagination
 from todo_api.core.middleware.authentication.dependencies import CurrentUser
 from todo_api.todos import dependencies, schemas
 from todo_api.todos.models import Todo
 
+
+class TodoOrderBy(str, Enum):
+    created_at = "createdAt"
+    upadted_at = "upadtedAt"
+
+
 router = APIRouter(prefix="/todos", tags=["todos"])
 
 
-@router.get("/me", response_model=list[schemas.TodoRead])
+@router.get("/me", response_model=pagination.Paginated[schemas.TodoRead])
 def get_user_todo(
+    pagination_params: pagination.PaginationParamsQuery,
+    order_by: dependencies.TodoOrderByParamsQuery,
     user: CurrentUser,
     service: dependencies.TodoService,
 ):
-    todos = service.list_for_user(user.db_user.id)
+    total_todos = service.count(user_id=user.db_user.id)
+    todos = service.list_(
+        user_id=user.db_user.id,
+        offset=pagination_params.offset,
+        limit=pagination_params.limit,
+        order_by=order_by,
+    )
 
-    return todos
+    return pagination.Paginated[schemas.TodoRead].create(
+        [schemas.TodoRead.model_validate(todo) for todo in todos],
+        size=pagination_params.size,
+        page=pagination_params.page,
+        total=total_todos,
+    )
 
 
 @router.get("/{id}", response_model=schemas.TodoRead)

@@ -48,7 +48,11 @@ class PrometheusMiddleware:
         return request.url.path
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        t0 = time.process_time()
+        if scope["type"] not in {"http"}:
+            await self.app(scope, receive, send)
+            return
+
+        t0 = time.perf_counter()
 
         status_code = "418"
 
@@ -74,7 +78,7 @@ class PrometheusMiddleware:
             ).inc()
             raise exc
         else:
-            duration = time.process_time() - t0
+            duration = time.perf_counter() - t0
             REQUESTS_PROCESS_TIME.labels(
                 method=method, path=path, status_code=status_code
             ).observe(duration)

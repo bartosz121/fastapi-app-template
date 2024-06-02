@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     AUTH_COOKIE_NAME: str = "todo_auth"
     AUTH_COOKIE_DOMAIN: str = "127.0.0.1"
     JWT_EXPIRATION: int = 3600 * 72  # seconds
+    PROMETHEUS_MULTIPROC_DIR: str | None = None
 
     DB_SCHEME: str = "sqlite:///database.db"
     DB_HOST: str = ""

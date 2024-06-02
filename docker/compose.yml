@@ -11,5 +11,7 @@ services:
       - SECRET=Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4
       - AUTH_COOKIE_NAME=todo_auth
       - AUTH_COOKIE_DOMAIN=127.0.0.1
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
     ports:
       - 8000:8000
+    command: gunicorn "todo_api.main:create_app()" --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000

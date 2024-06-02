@@ -26,4 +26,6 @@ RUN poetry install --only-root --no-interaction --no-ansi \
 
 COPY . ./
 
+RUN mkdir /tmp/prometheus
+
 CMD ["uvicorn", "--factory", "todo_api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]

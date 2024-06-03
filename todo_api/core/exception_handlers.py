@@ -10,7 +10,7 @@ from todo_api.core.service import exceptions as service_exceptions
 log = getLogger(__name__)
 
 
-def configure_exception_handlers(app: FastAPI):
+def configure(app: FastAPI):
     @app.exception_handler(ResponseValidationError)
     async def response_validation_error(
         request: Request, exc: ResponseValidationError
@@ -49,4 +49,4 @@ def configure_exception_handlers(app: FastAPI):
         )
 
 
-__all__ = ("configure_exception_handlers",)
+__all__ = ("configure",)

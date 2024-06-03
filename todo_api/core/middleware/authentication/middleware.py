@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, Callable
 
+import structlog
 from sqlalchemy.orm import Session
 from starlette.requests import HTTPConnection
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -66,11 +67,13 @@ class AuthenticationMiddleware:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
-
         conn = HTTPConnection(scope)
 
         user = await self.backend.authenticate(conn)
         scope["auth_user"] = user
+
+        if isinstance(user, AuthenticatedUser):
+            structlog.contextvars.bind_contextvars(user_id=user.db_user.id)
 
         await self.app(scope, receive, send)
 

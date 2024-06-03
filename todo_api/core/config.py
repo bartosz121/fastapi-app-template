@@ -38,6 +38,7 @@ class Environment(StrEnum):
 
 class Settings(BaseSettings):
     ENVIRONMENT: Environment = Environment.DEVELOPMENT
+    LOG_LEVEL: str = "DEBUG"
 
     SECRET: SecretStr = SecretStr("Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4")
     AUTH_COOKIE_NAME: str = "todo_auth"

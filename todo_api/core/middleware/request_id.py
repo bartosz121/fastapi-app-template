@@ -4,8 +4,6 @@ from typing import Callable
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-REQUEST_ID_SCOPE_NAME = "request_id"
-
 request_id_ctx: ContextVar[str | None] = ContextVar("request_id_ctx", default=None)
 
 
@@ -25,7 +23,8 @@ class RequestIdMiddleware:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
 
-        request_id_ctx.set(self.id_factory(scope))
+        request_id = self.id_factory(scope)
+        request_id_ctx.set(request_id)
 
         async def send_with_request_id_header(message: Message) -> None:
             request_id = request_id_ctx.get()

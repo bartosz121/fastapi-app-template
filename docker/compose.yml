@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   api:
+    image: todo-api
     container_name: todo-api
     build:
       context: ../
@@ -14,4 +15,4 @@ services:
       - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
     ports:
       - 8000:8000
-    command: gunicorn "todo_api.main:create_app()" --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+    command: uvicorn --workers 4 --factory todo_api.main:create_app --host 0.0.0.0 --port 8000

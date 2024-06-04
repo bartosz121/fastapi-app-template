@@ -28,4 +28,4 @@ COPY . ./
 
 RUN mkdir /tmp/prometheus
 
-CMD ["uvicorn", "--factory", "todo_api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "--workers", "4", "--factory", "todo_api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]

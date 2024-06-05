@@ -1,4 +1,4 @@
-from sqlalchemy import MetaData, create_engine
+from sqlalchemy import MetaData, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from todo_api.core.config import settings
@@ -15,6 +15,16 @@ metadata_ = MetaData(
 
 
 engine = create_engine(settings.DB_URL, echo=settings.ENVIRONMENT.is_qa)
+
+
+@event.listens_for(engine, "connect")
+def do_connect(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("pragma journal_mode = wal")
+    cursor.execute("pragma synchronous = normal")
+    cursor.execute("pragma journal_size_limit = 6144000")
+    cursor.close()
+
 
 session_factory = sessionmaker(engine)
 

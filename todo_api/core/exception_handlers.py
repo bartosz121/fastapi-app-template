@@ -1,5 +1,4 @@
-from logging import getLogger
-
+import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import ResponseValidationError
 from fastapi.responses import JSONResponse
@@ -7,10 +6,10 @@ from fastapi.responses import JSONResponse
 from todo_api.core import exceptions as core_exceptions
 from todo_api.core.service import exceptions as service_exceptions
 
-log = getLogger(__name__)
+log: structlog.BoundLogger = structlog.get_logger()
 
 
-def configure(app: FastAPI):
+def configure(app: FastAPI) -> None:
     @app.exception_handler(ResponseValidationError)
     async def response_validation_error(
         request: Request, exc: ResponseValidationError

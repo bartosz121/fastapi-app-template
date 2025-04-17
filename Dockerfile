@@ -1,31 +1,37 @@
-FROM python:3.12.2-slim-bullseye
-
 ARG ENVIRONMENT=DEVELOPMENT
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    POETRY_VERSION=1.8.2 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_CACHE_DIR='/var/cache/pypoetry' \
-    PATH="$PATH:/root/.local/bin"
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_NO_CACHE=1 \
+    UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 
-RUN pip install poetry==${POETRY_VERSION}
-
-COPY pyproject.toml poetry.lock ./
-
-RUN if [ "${ENVIRONMENT}" = "PRODUCTION" ]; \
-    then poetry install --no-root --no-dev --no-interaction --no-ansi; \
-    else poetry install --no-root --no-interaction --no-ansi; \
+RUN --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    if [ "${ENVIRONMENT}" = "PRODUCTION" ]; then \
+    uv sync --frozen --no-install-project --no-dev; \
+    else \
+    uv sync --frozen --no-install-project --all-groups; \
     fi
 
-RUN poetry install --only-root --no-interaction --no-ansi \
-    && rm -rf "${POETRY_CACHE_DIR}"
+ADD . /app
 
-COPY . ./
+RUN if [ "${ENVIRONMENT}" = "PRODUCTION" ]; then \
+    uv sync --frozen --no-dev; \
+    else \
+    uv sync --frozen --all-groups; \
+    fi
+
+
+FROM python:3.13-slim-bookworm AS final
+
+COPY --from=builder --chown=app:app /app /app
 
 RUN mkdir /tmp/prometheus
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 CMD ["uvicorn", "--workers", "4", "--factory", "todo_api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]

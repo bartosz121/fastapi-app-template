@@ -2,17 +2,17 @@ version: "3.9"
 
 services:
   api:
-    image: todo-api
+    image: todo-api:latest
     container_name: todo-api
     build:
       context: ../
       dockerfile: Dockerfile
     environment:
-      - DB_SCHEME=sqlite:///database.db
+      - DB_URL=sqlite:///database.db
       - SECRET=Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4
       - AUTH_COOKIE_NAME=todo_auth
       - AUTH_COOKIE_DOMAIN=127.0.0.1
       - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
     ports:
       - 8000:8000
-    command: uvicorn --workers 4 --factory todo_api.main:create_app --host 0.0.0.0 --port 8000
+    command: uv run uvicorn --workers 4 --factory todo_api.main:create_app --host 0.0.0.0 --port 8000

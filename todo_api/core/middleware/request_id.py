@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from contextvars import ContextVar
-from typing import Callable
 
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -12,9 +12,7 @@ class RequestIdMiddleware:
     header_name: str
     id_factory: Callable[[Scope], str]
 
-    def __init__(
-        self, app: ASGIApp, header_name: str, id_factory: Callable[[Scope], str]
-    ) -> None:
+    def __init__(self, app: ASGIApp, header_name: str, id_factory: Callable[[Scope], str]) -> None:
         self.app = app
         self.header_name = header_name
         self.id_factory = id_factory

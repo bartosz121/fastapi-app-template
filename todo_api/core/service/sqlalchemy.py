@@ -1,9 +1,9 @@
+from collections.abc import Iterable
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Any, Generic, Iterable, Literal, NamedTuple, TypeVar, cast
+from typing import Any, Generic, Literal, NamedTuple, TypeVar, cast
 
-from sqlalchemy import Column, Select, asc, desc, select
-from sqlalchemy import func as sqla_func
+from sqlalchemy import Column, Select, asc, desc, func as sqla_func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -50,7 +50,7 @@ class SQLAlchemyService(Generic[T, U]):
     model_id_attr_name: str = "id"
     model_id_type: type[U]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         session: Session,
         *,
@@ -67,17 +67,13 @@ class SQLAlchemyService(Generic[T, U]):
         self.auto_refresh = auto_refresh
         self.auto_commit = auto_commit
 
-    def _get_statement(
-        self, statement: Select[tuple[T]] | None = None
-    ) -> Select[tuple[T]]:
+    def _get_statement(self, statement: Select[tuple[T]] | None = None) -> Select[tuple[T]]:
         return self.statement if statement is None else statement
 
     def _get_model_id_attr(self) -> Column[U]:
         return getattr(self.model, self.model_id_attr_name)
 
-    def _attach_to_session(
-        self, model: T, strategy: Literal["add", "merge"] = "add"
-    ) -> T:
+    def _attach_to_session(self, model: T, strategy: Literal["add", "merge"] = "add") -> T:
         if strategy == "add":
             self.session.add(model)
             return model
@@ -117,24 +113,18 @@ class SQLAlchemyService(Generic[T, U]):
 
         return self.session.expunge(instance) if auto_expunge else None
 
-    def _where_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _where_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
         for k, v in kwargs.items():
             if k not in RESERVED_KWARGS:
                 statement = statement.where(getattr(self.model, k) == v)
         return statement
 
-    def _offset_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _offset_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
         if offset := kwargs.get("offset"):
             statement = statement.offset(offset)
         return statement
 
-    def _limit_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _limit_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
         if limit := kwargs.get("limit"):
             statement = statement.limit(limit)
         return statement
@@ -158,9 +148,7 @@ class SQLAlchemyService(Generic[T, U]):
                     asc(getattr(self.model, order_by.field)),
                 )
             else:
-                statement = statement.order_by(
-                    desc(getattr(self.model, order_by.field))
-                )
+                statement = statement.order_by(desc(getattr(self.model, order_by.field)))
 
         return statement
 
@@ -292,9 +280,7 @@ class SQLAlchemyService(Generic[T, U]):
         statement = self._paginate_from_kwargs(statement, **kwargs)
         statement = self._order_by_from_kwargs(statement, **kwargs)
 
-        count_statement = statement.with_only_columns(sqla_func.count()).select_from(
-            self.model
-        )
+        count_statement = statement.with_only_columns(sqla_func.count()).select_from(self.model)
 
         with sql_error_handler():
             count_result = (self.session.execute(count_statement)).scalar() or 0

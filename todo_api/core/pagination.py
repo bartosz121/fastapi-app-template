@@ -1,9 +1,9 @@
+from collections.abc import Sequence
 from math import ceil
 from typing import (
     Annotated,
     Generic,
     NamedTuple,
-    Sequence,
     TypeVar,
     cast,
 )

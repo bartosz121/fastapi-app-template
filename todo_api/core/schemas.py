@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel as BaseModel_
-from pydantic import ConfigDict
+from pydantic import BaseModel as BaseModel_, ConfigDict
 from pydantic.alias_generators import to_camel
 
 T = TypeVar("T")

@@ -21,9 +21,7 @@ def configure(app: FastAPI) -> None:
         )
 
     @app.exception_handler(core_exceptions.BaseError)
-    async def base_error_handler(
-        request: Request, exc: core_exceptions.BaseError
-    ) -> JSONResponse:
+    async def base_error_handler(request: Request, exc: core_exceptions.BaseError) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"msg": "Internal server error"},

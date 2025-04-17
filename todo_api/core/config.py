@@ -54,9 +54,7 @@ class Settings(BaseSettings):
     DB_DATABASE: str = ""
     DB_PORT: int | None = None
 
-    # computed_field type:ignore -> https://github.com/python/mypy/issues/14461
-
-    @computed_field  # type: ignore
+    @computed_field
     @property
     def DB_URL(self) -> str:
         if self.DB_SCHEME.startswith("sqlite"):
@@ -74,4 +72,4 @@ class Settings(BaseSettings):
         ).unicode_string()
 
 
-settings = Settings()  # type: ignore
+settings = Settings()

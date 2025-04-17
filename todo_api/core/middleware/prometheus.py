@@ -73,9 +73,7 @@ class PrometheusMiddleware:
             await self.app(scope, receive, send_wrapper)
         except BaseException as exc:
             status_code = "500"
-            EXCEPTIONS.labels(
-                method=method, path=path, exception_type=type(exc).__name__
-            ).inc()
+            EXCEPTIONS.labels(method=method, path=path, exception_type=type(exc).__name__).inc()
             raise exc
         else:
             duration = time.perf_counter() - t0

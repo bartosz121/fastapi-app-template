@@ -30,9 +30,7 @@ class Token(BaseModel):
     @classmethod
     def from_jwt(cls, token_str: str) -> Self | None:
         try:
-            decoded = auth_jwt.decode(
-                token=token_str, secret=settings.SECRET.get_secret_value()
-            )
+            decoded = auth_jwt.decode(token=token_str, secret=settings.SECRET.get_secret_value())
             token = cls.model_validate(decoded)
         except (
             KeyError,

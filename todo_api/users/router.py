@@ -24,9 +24,7 @@ def login(
     auth_service: AuthService,
 ):
     user = user_service.get(username=data.username)
-    if not security.verify_password(
-        data.password.get_secret_value(), user.hashed_password
-    ):
+    if not security.verify_password(data.password.get_secret_value(), user.hashed_password):
         raise exceptions.Unauthorized(detail={"msg": "Invalid password"})
 
     token = auth_service.create_token(user.id)

@@ -30,9 +30,7 @@ class AuthService:
 
     @staticmethod
     def get_user_from_token(session: Session, token: Token) -> User | None:
-        user = session.execute(
-            select(User).where(User.id == token.user_id)
-        ).scalar_one_or_none()
+        user = session.execute(select(User).where(User.id == token.user_id)).scalar_one_or_none()
         return user
 
     @staticmethod

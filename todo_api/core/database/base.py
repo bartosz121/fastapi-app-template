@@ -43,9 +43,7 @@ class Model(DeclarativeBase):
         if self_eq_attr_val is None or value_eq_attr_val is None:
             return False
 
-        return (
-            isinstance(value, self.__class__) and self_eq_attr_val == value_eq_attr_val
-        )
+        return isinstance(value, self.__class__) and self_eq_attr_val == value_eq_attr_val
 
     def __repr__(self) -> str:
         id_value = getattr(self, self._eq_attr_name)

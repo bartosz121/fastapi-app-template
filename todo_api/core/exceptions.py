@@ -1,7 +1,6 @@
 from typing import TypedDict
 
-from fastapi import HTTPException as HTTPException_
-from fastapi import status
+from fastapi import HTTPException as HTTPException_, status
 
 
 class BaseError(Exception): ...
@@ -35,28 +34,20 @@ class BadRequest(HTTPException):
 
 
 class Unauthorized(HTTPException):
-    def __init__(
-        self, detail: HTTPExceptionDetail, headers: dict[str, str] | None = None
-    ) -> None:
+    def __init__(self, detail: HTTPExceptionDetail, headers: dict[str, str] | None = None) -> None:
         super().__init__(status.HTTP_401_UNAUTHORIZED, detail, headers)
 
 
 class Forbidden(HTTPException):
-    def __init__(
-        self, detail: HTTPExceptionDetail, headers: dict[str, str] | None = None
-    ) -> None:
+    def __init__(self, detail: HTTPExceptionDetail, headers: dict[str, str] | None = None) -> None:
         super().__init__(status.HTTP_403_FORBIDDEN, detail, headers)
 
 
 class NotFound(HTTPException):
-    def __init__(
-        self, detail: HTTPExceptionDetail, headers: dict[str, str] | None = None
-    ) -> None:
+    def __init__(self, detail: HTTPExceptionDetail, headers: dict[str, str] | None = None) -> None:
         super().__init__(status.HTTP_404_NOT_FOUND, detail, headers)
 
 
 class Conflict(HTTPException):
-    def __init__(
-        self, detail: HTTPExceptionDetail, headers: dict[str, str] | None = None
-    ) -> None:
+    def __init__(self, detail: HTTPExceptionDetail, headers: dict[str, str] | None = None) -> None:
         super().__init__(status.HTTP_409_CONFLICT, detail, headers)

@@ -1,4 +1,5 @@
-from typing import Annotated, Any, Generator
+from collections.abc import Generator
+from typing import Annotated, Any
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 from todo_api.core.database.base import session_factory
 
 
-def get_session() -> Generator[Session, Any, None]:
+def get_session() -> Generator[Session, Any]:
     with session_factory() as session:
         try:
             yield session

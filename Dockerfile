@@ -30,6 +30,8 @@ FROM python:3.13-slim-bookworm AS final
 
 COPY --from=builder --chown=app:app /app /app
 
+WORKDIR /app
+
 RUN mkdir /tmp/prometheus
 
 ENV PATH="/app/.venv/bin:$PATH"

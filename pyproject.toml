@@ -17,6 +17,7 @@ dependencies = [
     "structlog>=25.2.0",
     "uvicorn[standard]>=0.34.1",
     "uvloop>=0.21.0",
+    "taskipy>=1.14.1",
 ]
 
 
@@ -69,3 +70,8 @@ exclude_lines = [
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.taskipy.tasks]
+lint = { cmd = "ruff format . && ruff check --fix ." }
+lint_check = { cmd = "ruff format --check . && ruff check ." }
+typecheck = { cmd = "pyright --warnings ." }

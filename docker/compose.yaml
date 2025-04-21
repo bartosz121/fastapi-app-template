@@ -6,7 +6,7 @@ services:
       context: ../
       dockerfile: Dockerfile
     environment:
-      - DB_URL=sqlite:///database.db
+      - DB_URL=sqlite+aiosqlite:///database.db
       - SECRET=Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4
       - AUTH_COOKIE_NAME=todo_auth
       - AUTH_COOKIE_DOMAIN=127.0.0.1

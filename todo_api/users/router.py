@@ -1,10 +1,12 @@
 from fastapi import APIRouter, status
+from fastapi.requests import Request
 from fastapi.responses import Response
 
-from todo_api.auth.dependencies import AuthService
+from todo_api.auth import service as auth_service
+from todo_api.auth.dependencies import CurrentUser, CurrentUserOrAnonymous
+from todo_api.auth.schemas import Anonymous
 from todo_api.core import exceptions
 from todo_api.core.config import settings
-from todo_api.core.middleware.authentication.dependencies import CurrentUser
 from todo_api.users import dependencies, schemas, security
 from todo_api.users.models import User
 
@@ -12,28 +14,37 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me", response_model=schemas.UserRead)
-def me(user: CurrentUser):
-    return user.db_user
+async def me(user: CurrentUser):
+    return user
 
 
 @router.post("/login", response_model=schemas.LoginResponse)
-def login(
+async def login(
+    request: Request,
     response: Response,
     data: schemas.UserCreate,
+    user_auth: CurrentUserOrAnonymous,
     user_service: dependencies.UserService,
-    auth_service: AuthService,
 ):
-    user = user_service.get(username=data.username)
+    if not isinstance(user_auth, Anonymous):
+        raise exceptions.Forbidden({"msg": "Forbidden"})
+
+    user = await user_service.get_one_or_none(username=data.username)
+    if not user:
+        raise exceptions.Unauthorized(detail={"msg": "Invalid username or password"})
+
     if not security.verify_password(data.password.get_secret_value(), user.hashed_password):
-        raise exceptions.Unauthorized(detail={"msg": "Invalid password"})
+        raise exceptions.Unauthorized(detail={"msg": "Invalid username or password"})
 
     token = auth_service.create_token(user.id)
 
+    is_localhost = request.url.hostname in ["127.0.0.1", "localhost"]
+    secure = False if is_localhost else True
     auth_service.set_auth_cookie(
         response,
         token,
         expires_in=settings.JWT_EXPIRATION,
-        secure=settings.ENVIRONMENT.is_production,
+        secure=secure,
     )
 
     return {"token": token}
@@ -44,24 +55,34 @@ def login(
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.UserRead,
 )
-def register(data: schemas.UserCreate, service: dependencies.UserService):
-    username_exists = service.exists(username=data.username)
+async def register(
+    data: schemas.UserCreate, user_auth: CurrentUserOrAnonymous, service: dependencies.UserService
+):
+    if not isinstance(user_auth, Anonymous):
+        raise exceptions.Forbidden({"msg": "Forbidden"})
+
+    username_exists = await service.exists(username=data.username)
     if username_exists:
         raise exceptions.Conflict(detail={"msg": "Username already exists"})
+
     hashed_password = security.get_password_hash(data.password.get_secret_value())
     user = User(username=data.username, hashed_password=hashed_password)
-    service.create(user)
 
-    return user
+    created_user = await service.create(user)
+
+    return created_user
 
 
 @router.get("/logout", response_model=schemas.LogoutResponse)
-def logout(
+async def logout(
+    request: Request,
     response: Response,
-    auth_service: AuthService,
 ):
+    is_localhost = request.url.hostname in ["127.0.0.1", "localhost"]
+    secure = False if is_localhost else True
     auth_service.set_logout_cookie(
         response,
-        secure=settings.ENVIRONMENT.is_production,
+        secure=secure,
     )
+
     return {"status": "ok"}

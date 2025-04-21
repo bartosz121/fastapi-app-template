@@ -22,7 +22,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 
 def create_app() -> FastAPI:
     configure_logging()
-
     app = FastAPI(lifespan=lifespan)
 
     configure_middleware(app)

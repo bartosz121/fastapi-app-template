@@ -1,7 +1,7 @@
 from enum import StrEnum
+from typing import Literal
 
-from pydantic import SecretStr, computed_field
-from pydantic_core import MultiHostUrl
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 
@@ -47,29 +47,31 @@ class Settings(BaseSettings):
     PROMETHEUS_MULTIPROC_DIR: str | None = None
 
     DB_SCHEME: str = "sqlite:///database.db"
-    DB_HOST: str = ""
-    DB_NAME: str = ""
-    DB_USER: str = ""
-    DB_PASSWORD: SecretStr | None = None
-    DB_DATABASE: str = ""
-    DB_PORT: int | None = None
+    # postgres
+    # DB_HOST: str = ""
+    # DB_NAME: str = ""
+    # DB_USER: str = ""
+    # DB_PASSWORD: SecretStr
+    # DB_DATABASE: str = ""
+    # DB_PORT: int
 
-    @computed_field
-    @property
-    def DB_URL(self) -> str:
-        if self.DB_SCHEME.startswith("sqlite"):
+    def get_sqlite_dsn(self, *, driver: Literal["aiosqlite"] | None = None) -> str:
+        if driver is None:
             return self.DB_SCHEME
+        return f"sqlite+{driver}:///database.db"
 
-        return MultiHostUrl.build(
-            scheme=self.DB_SCHEME,
-            username=self.DB_USER,
-            password=self.DB_PASSWORD.get_secret_value()
-            if isinstance(self.DB_PASSWORD, SecretStr)
-            else None,
-            host=self.DB_HOST,
-            port=self.DB_PORT,
-            path=self.DB_DATABASE,
-        ).unicode_string()
+    # postgres
+    # def get_postgres_dsn(self, driver: Literal["asyncpg", "psycopg2"]) -> str:
+    #     return str(
+    #         PostgresDsn.build(
+    #             scheme=f"postgresql+{driver}",
+    #             username=self.DB_USER,
+    #             password=self.DB_PASSWORD.get_secret_value(),
+    #             host=self.DB_HOST,
+    #             port=self.DB_PORT,
+    #             path=self.DB_DATABASE,
+    #         )
+    #     )
 
 
 settings = Settings()

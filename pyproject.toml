@@ -18,6 +18,7 @@ dependencies = [
     "uvicorn[standard]>=0.34.1",
     "uvloop>=0.21.0",
     "taskipy>=1.14.1",
+    "aiosqlite>=0.21.0",
 ]
 
 
@@ -26,7 +27,6 @@ dev = [
     "ruff>=0.11.5",
     "pyright>=1.1.399",
     "pytest>=8.3.5",
-    "pytest-asyncio>=0.26.0",
     "pytest-cov>=6.1.1",
     "pytest-mock>=3.14.0",
     "pytest-sugar>=1.0.0",
@@ -34,6 +34,10 @@ dev = [
     "faker>=37.1.0",
     "hypothesis>=6.131.0",
     "types-passlib>=1.7.7.20250408",
+    "sqlalchemy-utils>=0.41.2",
+    "httpx>=0.28.1",
+    "pytest-asyncio>=0.26.0",
+    "asgi-lifespan>=2.1.0",
 ]
 
 [build-system]
@@ -68,8 +72,9 @@ exclude_lines = [
 
 
 [tool.pytest.ini_options]
-asyncio_mode = "strict"
+asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+markers = ["auth"]
 
 [tool.taskipy.tasks]
 lint = { cmd = "ruff format . && ruff check --fix ." }

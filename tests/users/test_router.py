@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.fixtures.auth import AuthenticateAs
 from tests.fixtures.database import SaveModel
+from todo_api.core.exceptions import Codes
 from todo_api.users import security
 from todo_api.users.models import User
 
@@ -47,6 +48,7 @@ async def test_register_username_conflict(
     assert "detail" in data
     assert "msg" in data["detail"]
     assert "Username already exists" in data["detail"]["msg"]
+    assert data["detail"]["code"] == Codes.USERNAME_EXISTS
 
 
 async def test_login_success(client: httpx.AsyncClient, save_model_fixture: SaveModel):
@@ -77,6 +79,7 @@ async def test_login_user_not_found(client: httpx.AsyncClient):
     assert "detail" in data
     assert "msg" in data["detail"]
     assert "Invalid username or password" in data["detail"]["msg"]
+    assert data["detail"]["code"] == Codes.INVALID_USERNAME_OR_PASSWORD
 
 
 async def test_login_incorrect_password(client: httpx.AsyncClient, save_model_fixture: SaveModel):
@@ -93,6 +96,7 @@ async def test_login_incorrect_password(client: httpx.AsyncClient, save_model_fi
     assert "detail" in data
     assert "msg" in data["detail"]
     assert "Invalid username or password" in data["detail"]["msg"]
+    assert data["detail"]["code"] == Codes.INVALID_USERNAME_OR_PASSWORD
 
 
 @pytest.mark.auth(AuthenticateAs(type_="dont_override"))

@@ -39,7 +39,7 @@ class Authenticator:
         self, user: User | Anonymous = Depends(get_user_from_jwt)
     ) -> User | Anonymous:
         if not self.allow_anonymous and isinstance(user, Anonymous):
-            raise Unauthorized({"msg": "Unauthorized"})
+            raise Unauthorized()
         return user
 
 

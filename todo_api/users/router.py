@@ -27,14 +27,20 @@ async def login(
     user_service: dependencies.UserService,
 ):
     if not isinstance(user_auth, Anonymous):
-        raise exceptions.Forbidden({"msg": "Forbidden"})
+        raise exceptions.Forbidden(code=exceptions.Codes.ALREADY_LOGGED_IN)
 
     user = await user_service.get_one_or_none(username=data.username)
     if not user:
-        raise exceptions.Unauthorized(detail={"msg": "Invalid username or password"})
+        raise exceptions.Unauthorized(
+            msg="Invalid username or password",
+            code=exceptions.Codes.INVALID_USERNAME_OR_PASSWORD,
+        )
 
     if not security.verify_password(data.password.get_secret_value(), user.hashed_password):
-        raise exceptions.Unauthorized(detail={"msg": "Invalid username or password"})
+        raise exceptions.Unauthorized(
+            msg="Invalid username or password",
+            code=exceptions.Codes.INVALID_USERNAME_OR_PASSWORD,
+        )
 
     token = auth_service.create_token(user.id)
 
@@ -59,11 +65,14 @@ async def register(
     data: schemas.UserCreate, user_auth: CurrentUserOrAnonymous, service: dependencies.UserService
 ):
     if not isinstance(user_auth, Anonymous):
-        raise exceptions.Forbidden({"msg": "Forbidden"})
+        raise exceptions.Forbidden()
 
     username_exists = await service.exists(username=data.username)
     if username_exists:
-        raise exceptions.Conflict(detail={"msg": "Username already exists"})
+        raise exceptions.Conflict(
+            msg="Username already exists",
+            code=exceptions.Codes.USERNAME_EXISTS,
+        )
 
     hashed_password = security.get_password_hash(data.password.get_secret_value())
     user = User(username=data.username, hashed_password=hashed_password)

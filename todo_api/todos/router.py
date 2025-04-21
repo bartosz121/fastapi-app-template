@@ -51,7 +51,7 @@ async def get_todo_by_id(
     todo = await service.get_one(id=id)
 
     if todo.user_id != user.id:
-        raise exceptions.Forbidden({"msg": "Forbidden"})
+        raise exceptions.Forbidden(code=exceptions.Codes.NOT_OWNER)
 
     return todo
 
@@ -78,7 +78,7 @@ async def update_todo(
     todo_db = await service.get_one(id=id)
 
     if todo_db.user_id != user.id:
-        raise exceptions.Forbidden({"msg": "Forbidden"})
+        raise exceptions.Forbidden(code=exceptions.Codes.NOT_OWNER)
 
     update_data = data.model_dump(exclude_unset=True)
     for k, v in update_data.items():
@@ -99,7 +99,7 @@ async def delete_todo(
     todo = await service.get_one(id=id)
 
     if todo.user_id != user.id:
-        raise exceptions.Forbidden({"msg": "Forbidden"})
+        raise exceptions.Forbidden(code=exceptions.Codes.NOT_OWNER)
 
     await service.delete(id)
 

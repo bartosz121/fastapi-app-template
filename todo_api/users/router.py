@@ -65,7 +65,7 @@ async def register(
     data: schemas.UserCreate, user_auth: CurrentUserOrAnonymous, service: dependencies.UserService
 ):
     if not isinstance(user_auth, Anonymous):
-        raise exceptions.Forbidden()
+        raise exceptions.Forbidden(code=exceptions.Codes.ALREADY_LOGGED_IN)
 
     username_exists = await service.exists(username=data.username)
     if username_exists:

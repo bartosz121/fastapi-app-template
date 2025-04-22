@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from contextvars import ContextVar
 
+import structlog
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -23,6 +24,7 @@ class RequestIdMiddleware:
 
         request_id = self.id_factory(scope)
         request_id_ctx.set(request_id)
+        structlog.contextvars.bind_contextvars(request_id=request_id)
 
         async def send_with_request_id_header(message: Message) -> None:
             request_id = request_id_ctx.get()

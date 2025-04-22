@@ -1,5 +1,6 @@
 from typing import Annotated
 
+import structlog
 from fastapi import Depends, Request
 
 from todo_api.auth import service as auth_service
@@ -38,6 +39,7 @@ class Authenticator:
     async def __call__(
         self, user: User | Anonymous = Depends(get_user_from_jwt)
     ) -> User | Anonymous:
+        structlog.contextvars.bind_contextvars(user_id=user.id if isinstance(user, User) else None)
         if not self.allow_anonymous and isinstance(user, Anonymous):
             raise Unauthorized()
         return user

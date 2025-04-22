@@ -1,4 +1,9 @@
-from sqlalchemy import MetaData, create_engine, event
+from sqlalchemy import Engine, MetaData, create_engine as _create_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    async_sessionmaker,
+    create_async_engine as _create_async_engine,
+)
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from todo_api.core.config import settings
@@ -14,19 +19,52 @@ metadata_ = MetaData(
 )
 
 
-engine = create_engine(settings.DB_URL, echo=settings.ENVIRONMENT.is_qa)
+def create_engine(
+    *,
+    dsn: str,
+    app_name: str | None = None,
+    pool_size: int = 5,
+    pool_recycle: int = 3600,
+    pool_pre_ping: bool = True,
+    debug: bool = False,
+) -> Engine:
+    return _create_engine(
+        dsn,
+        echo=debug,
+        pool_size=pool_size,
+        pool_recycle=pool_recycle,
+        pool_pre_ping=pool_pre_ping,
+        connect_args={"server_settings": {"application_name": app_name}} if app_name else {},
+    )
 
 
-@event.listens_for(engine, "connect")
-def do_connect(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("pragma journal_mode = wal")
-    cursor.execute("pragma synchronous = normal")
-    cursor.execute("pragma journal_size_limit = 6144000")
-    cursor.close()
+def create_async_engine(
+    *,
+    dsn: str,
+    app_name: str | None = None,
+    pool_size: int = 5,
+    pool_recycle: int = 3600,
+    pool_pre_ping: bool = True,
+    debug: bool = False,
+) -> AsyncEngine:
+    return _create_async_engine(
+        dsn,
+        echo=debug,
+        pool_size=pool_size,
+        pool_recycle=pool_recycle,
+        pool_pre_ping=pool_pre_ping,
+        connect_args={"server_settings": {"application_name": app_name}} if app_name else {},
+    )
 
 
-session_factory = sessionmaker(engine)
+engine = create_engine(dsn=settings.get_sqlite_dsn(), debug=settings.ENVIRONMENT.is_qa)
+async_engine = create_async_engine(
+    dsn=settings.get_sqlite_dsn(driver="aiosqlite"), debug=settings.ENVIRONMENT.is_qa
+)
+
+
+SyncSessionMaker = sessionmaker(engine, expire_on_commit=False)
+AsyncSessionMaker = async_sessionmaker(async_engine, expire_on_commit=False)
 
 
 class Model(DeclarativeBase):
@@ -43,9 +81,7 @@ class Model(DeclarativeBase):
         if self_eq_attr_val is None or value_eq_attr_val is None:
             return False
 
-        return (
-            isinstance(value, self.__class__) and self_eq_attr_val == value_eq_attr_val
-        )
+        return isinstance(value, self.__class__) and self_eq_attr_val == value_eq_attr_val
 
     def __repr__(self) -> str:
         id_value = getattr(self, self._eq_attr_name)

@@ -17,16 +17,19 @@ def configure(app: FastAPI) -> None:
         log.error(str(exc))
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"msg": "Internal response validation error"},
+            content={
+                "msg": "Internal response validation error",
+                "code": core_exceptions.Codes.RESPONSE_VALIDATION_ERROR,
+            },
         )
 
-    @app.exception_handler(core_exceptions.BaseError)
+    @app.exception_handler(core_exceptions.TodoApiError)
     async def base_error_handler(
-        request: Request, exc: core_exceptions.BaseError
+        request: Request, exc: core_exceptions.TodoApiError
     ) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"msg": "Internal server error"},
+            content={"msg": "Internal server error", "code": None},
         )
 
     @app.exception_handler(service_exceptions.NotFoundError)
@@ -35,7 +38,7 @@ def configure(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={"msg": "Not found"},
+            content={"msg": "Not found", "code": None},
         )
 
     @app.exception_handler(service_exceptions.ConflictError)
@@ -44,7 +47,7 @@ def configure(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
-            content={"msg": "Conflict"},
+            content={"msg": "Conflict", "code": None},
         )
 
 

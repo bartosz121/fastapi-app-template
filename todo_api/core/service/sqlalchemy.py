@@ -1,11 +1,12 @@
+from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
-from logging import getLogger
-from typing import Any, Generic, Iterable, Literal, NamedTuple, TypeVar, cast
+from typing import Any, Generic, Literal, NamedTuple, TypeVar
 
-from sqlalchemy import Column, Select, asc, desc, select
-from sqlalchemy import func as sqla_func
+import structlog
+from sqlalchemy import Select, asc, desc, func as sqla_func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from todo_api.core.service.exceptions import (
     ConflictError,
@@ -13,10 +14,10 @@ from todo_api.core.service.exceptions import (
     ServiceError,
 )
 
-log = getLogger(__name__)
+logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 
 
-class OrderByBase(NamedTuple):
+class OrderBy(NamedTuple):
     field: str
     order: Literal["asc", "desc"]
 
@@ -26,33 +27,31 @@ def sql_error_handler():
     try:
         yield
     except IntegrityError as exc:
-        log.error(str(exc))
-        raise ConflictError from exc
+        logger.error(f"Database integrity error: {exc}", exc_info=True)
+        raise ConflictError("Database constraint violated.") from exc
     except SQLAlchemyError as exc:
-        log.error(str(exc))
-        msg = "An exception occured while executing SQL statement"
+        logger.error(f"Database error during operation: {exc}", exc_info=True)
+        msg = "A database error occurred"
         raise ServiceError(msg) from exc
     except AttributeError as exc:
-        log.error(str(exc))
-        raise ServiceError from exc
+        logger.error(f"Attribute error during service operation: {exc}", exc_info=True)
+        raise ServiceError("An internal error occurred due to invalid attribute access.") from exc
 
 
 T = TypeVar("T")
 U = TypeVar("U")
 SelectT = TypeVar("SelectT", bound=Select[Any])
 
-# List of kwargs which we don;t want to touch when "_where_from_kwargs" runs
 RESERVED_KWARGS = {"offset", "limit", "order_by"}
 
 
 class SQLAlchemyService(Generic[T, U]):
     model: type[T]
     model_id_attr_name: str = "id"
-    model_id_type: type[U]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        session: Session,
+        session: AsyncSession,
         *,
         statement: Select[tuple[T]] | None = None,
         auto_expunge: bool = False,
@@ -62,37 +61,36 @@ class SQLAlchemyService(Generic[T, U]):
     ) -> None:
         super().__init__(**kwargs)
         self.session = session
+
         self.statement = statement if statement is not None else select(self.model)
         self.auto_expunge = auto_expunge
         self.auto_refresh = auto_refresh
         self.auto_commit = auto_commit
 
-    def _get_statement(
-        self, statement: Select[tuple[T]] | None = None
-    ) -> Select[tuple[T]]:
-        return self.statement if statement is None else statement
+    def _get_statement(self, statement: Select[tuple[T]] | None = None) -> Select[tuple[T]]:
+        return self.statement if statement is not None else select(self.model)
 
-    def _get_model_id_attr(self) -> Column[U]:
+    def _get_model_id_attr(self) -> InstrumentedAttribute[U]:
         return getattr(self.model, self.model_id_attr_name)
 
-    def _attach_to_session(
-        self, model: T, strategy: Literal["add", "merge"] = "add"
-    ) -> T:
+    async def _attach_to_session(self, model: T, strategy: Literal["add", "merge"] = "add") -> T:
         if strategy == "add":
             self.session.add(model)
             return model
         if strategy == "merge":
-            return self.session.merge(model)
+            return await self.session.merge(model)
 
-        msg = f"Strategy must be 'add' or 'merge', found:{strategy!r}"
+        msg = f"Strategy must be 'add' or handled within async methods like 'update', found:{strategy!r}"
         raise ServiceError(msg)
 
-    def _flush_or_commit(self, auto_commit: bool | None) -> None:
-        auto_commit = self.auto_commit if auto_commit is None else auto_commit
+    async def _flush_or_commit(self, auto_commit: bool | None = None) -> None:
+        auto_commit_ = self.auto_commit if auto_commit is None else auto_commit
+        if auto_commit_:
+            await self.session.commit()
+        else:
+            await self.session.flush()
 
-        return self.session.commit() if auto_commit else self.session.flush()
-
-    def _refresh(
+    async def _refresh(
         self,
         instance: T,
         attribute_names: Iterable[str] | None = None,
@@ -100,67 +98,62 @@ class SQLAlchemyService(Generic[T, U]):
         auto_refresh: bool | None,
         with_for_update: bool | None = None,
     ) -> None:
-        auto_refresh = self.auto_refresh if auto_refresh is None else auto_refresh
-
-        return (
-            self.session.refresh(
+        auto_refresh_ = self.auto_refresh if auto_refresh is None else auto_refresh
+        if auto_refresh_:
+            await self.session.refresh(
                 instance,
                 attribute_names=attribute_names,
                 with_for_update=with_for_update,
             )
-            if auto_refresh
-            else None
-        )
 
     def _expunge(self, instance: T, auto_expunge: bool | None = None) -> None:
-        auto_expunge = self.auto_expunge if auto_expunge is None else auto_expunge
+        auto_expunge_ = self.auto_expunge if auto_expunge is None else auto_expunge
+        if auto_expunge_:
+            self.session.expunge(instance)
 
-        return self.session.expunge(instance) if auto_expunge else None
-
-    def _where_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _where_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
+        stmt = statement
         for k, v in kwargs.items():
-            if k not in RESERVED_KWARGS:
-                statement = statement.where(getattr(self.model, k) == v)
+            if k not in RESERVED_KWARGS and hasattr(self.model, k):
+                stmt = stmt.where(getattr(self.model, k) == v)
+            elif k not in RESERVED_KWARGS:
+                logger.warning(
+                    f"Attempted to filter by non-existent attribute '{k}' on model {self.model.__name__}"
+                )
+
+        return stmt
+
+    def _offset_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
+        if (offset := kwargs.get("offset")) is not None:
+            return statement.offset(offset)
         return statement
 
-    def _offset_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
-        if offset := kwargs.get("offset"):
-            statement = statement.offset(offset)
-        return statement
-
-    def _limit_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
-        if limit := kwargs.get("limit"):
-            statement = statement.limit(limit)
+    def _limit_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
+        if (limit := kwargs.get("limit")) is not None:
+            return statement.limit(limit)
         return statement
 
     def _paginate_from_kwargs(
         self, statement: Select[tuple[T]], **kwargs: Any
     ) -> Select[tuple[T]]:
-        statement = self._offset_from_kwargs(statement, **kwargs)
-        statement = self._limit_from_kwargs(statement, **kwargs)
-        return statement
+        stmt = self._offset_from_kwargs(statement, **kwargs)
+        stmt = self._limit_from_kwargs(stmt, **kwargs)
+        return stmt
 
     def _order_by_from_kwargs(
         self, statement: Select[tuple[T]], **kwargs: Any
     ) -> Select[tuple[T]]:
-        if order_by := kwargs.get("order_by"):
-            if not isinstance(order_by, OrderByBase):
-                raise ServiceError("order_by argument is not of expected type")
-
-            if order_by.order == "asc":
-                statement = statement.order_by(
-                    asc(getattr(self.model, order_by.field)),
-                )
+        order_by: OrderBy | None = kwargs.get("order_by")
+        if isinstance(order_by, OrderBy):
+            if hasattr(self.model, order_by.field):
+                order_func = asc if order_by.order == "asc" else desc
+                statement = statement.order_by(order_func(getattr(self.model, order_by.field)))
             else:
-                statement = statement.order_by(
-                    desc(getattr(self.model, order_by.field))
+                logger.warning(
+                    f"Attempted to order by non-existent attribute '{order_by.field}' on model {self.model.__name__}"
                 )
+        else:
+            logger.warning(f"Invalid order_by type: {type(order_by)}. Expected OrderBy.")
 
         return statement
 
@@ -170,19 +163,20 @@ class SQLAlchemyService(Generic[T, U]):
             raise NotFoundError(msg)
         return item
 
-    def count(self, statement: Select[tuple[T]] | None = None, **kwargs: Any) -> int:
+    async def count(self, statement: Select[tuple[T]] | None = None, **kwargs: Any) -> int:
         with sql_error_handler():
-            statement = self._get_statement(statement)
-            statement = statement.with_only_columns(
-                sqla_func.count(self._get_model_id_attr()),
-                maintain_column_froms=True,
-            ).select_from(self.model)
-            statement = self._where_from_kwargs(statement, **kwargs)
+            stmt = self._get_statement(statement)
+            stmt = self._where_from_kwargs(stmt, **kwargs)
 
-            result = self.session.execute(statement)
-            return cast(int, result.scalar_one())
+            count_statement = select(sqla_func.count()).select_from(
+                stmt.with_only_columns(self._get_model_id_attr()).subquery()
+            )
 
-    def create(
+            result = await self.session.execute(count_statement)
+            count = result.scalar_one_or_none()
+            return count or 0
+
+    async def create(
         self,
         data: T,
         *,
@@ -191,13 +185,13 @@ class SQLAlchemyService(Generic[T, U]):
         auto_expunge: bool | None = None,
     ) -> T:
         with sql_error_handler():
-            instance = self._attach_to_session(data)
-            self._flush_or_commit(auto_commit=auto_commit)
-            self._refresh(instance, auto_refresh=auto_refresh)
+            instance = await self._attach_to_session(data, strategy="add")
+            await self._flush_or_commit(auto_commit=auto_commit)
+            await self._refresh(instance, auto_refresh=auto_refresh)
             self._expunge(instance, auto_expunge=auto_expunge)
             return instance
 
-    def delete(
+    async def delete(
         self,
         id: U,
         *,
@@ -205,17 +199,32 @@ class SQLAlchemyService(Generic[T, U]):
         auto_expunge: bool | None = None,
     ) -> T:
         with sql_error_handler():
-            instance = self.get(id=id)
-            self.session.delete(instance)
-            self._flush_or_commit(auto_commit=auto_commit)
+            instance = await self.get_one(id=id, auto_expunge=False)
+            await self.session.delete(instance)
+            await self._flush_or_commit(auto_commit=auto_commit)
             self._expunge(instance, auto_expunge=auto_expunge)
+
             return instance
 
-    def exists(self, **kwargs: Any) -> bool:
-        exists = self.count(**kwargs)
-        return exists > 0
+    async def exists(self, **kwargs: Any) -> bool:
+        with sql_error_handler():
+            stmt = self._get_statement()
+            stmt = self._where_from_kwargs(stmt, **kwargs)
 
-    def get(
+            stmt = stmt.with_only_columns(self._get_model_id_attr()).limit(1)
+            result = await self.session.execute(stmt)
+            return result.scalar_one_or_none() is not None
+
+    async def get(
+        self,
+        *,
+        statement: Select[tuple[T]] | None = None,
+        auto_expunge: bool | None = None,
+        **kwargs: Any,
+    ) -> T:
+        return await self.get_one(statement=statement, auto_expunge=auto_expunge, **kwargs)
+
+    async def get_one(
         self,
         *,
         statement: Select[tuple[T]] | None = None,
@@ -223,88 +232,78 @@ class SQLAlchemyService(Generic[T, U]):
         **kwargs: Any,
     ) -> T:
         with sql_error_handler():
-            statement = self._get_statement(statement)
-            statement = self._where_from_kwargs(statement, **kwargs)
+            stmt = self._get_statement(statement)
+            stmt = self._where_from_kwargs(stmt, **kwargs)
 
-            instance = (self.session.execute(statement)).scalar_one_or_none()
-            instance = self.check_not_found(instance)
-            self._expunge(instance, auto_expunge=auto_expunge)
-
-            return instance
-
-    def get_one(
-        self,
-        *,
-        statement: Select[tuple[T]] | None = None,
-        auto_expunge: bool | None = None,
-        **kwargs: Any,
-    ) -> T:
-        with sql_error_handler():
-            statement = self._get_statement(statement)
-            statement = self._where_from_kwargs(statement, **kwargs)
-
-            instance = self.session.execute(statement).scalar_one_or_none()
-            instance = self.check_not_found(instance)
+            result = await self.session.execute(stmt)
+            instance = self.check_not_found(result.scalar_one_or_none())
             self._expunge(instance, auto_expunge=auto_expunge)
             return instance
 
-    def get_one_or_none(
+    async def get_one_or_none(
         self,
         statement: Select[tuple[T]] | None = None,
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> T | None:
         with sql_error_handler():
-            statement = self._get_statement(statement)
-            statement = self._where_from_kwargs(statement, **kwargs)
+            stmt = self._get_statement(statement)
+            stmt = self._where_from_kwargs(stmt, **kwargs)
 
-            instance = (self.session.execute(statement)).scalar_one_or_none()
+            result = await self.session.execute(stmt)
+            instance = result.scalar_one_or_none()
             if instance:
                 self._expunge(instance, auto_expunge=auto_expunge)
             return instance
 
-    def list_(
+    async def list_(
         self,
         statement: Select[tuple[T]] | None = None,
         auto_expunge: bool | None = None,
         **kwargs: Any,
-    ) -> list[T]:
+    ) -> Sequence[T]:
         with sql_error_handler():
-            statement = self._get_statement(statement)
-            statement = self._where_from_kwargs(statement, **kwargs)
-            statement = self._paginate_from_kwargs(statement, **kwargs)
-            statement = self._order_by_from_kwargs(statement, **kwargs)
+            stmt = self._get_statement(statement)
+            stmt = self._where_from_kwargs(stmt, **kwargs)
+            stmt = self._paginate_from_kwargs(stmt, **kwargs)
+            stmt = self._order_by_from_kwargs(stmt, **kwargs)
 
-            items = list((self.session.execute(statement)).scalars())
+            result = await self.session.execute(stmt)
+            items = list(result.scalars().all())
             for item in items:
                 self._expunge(item, auto_expunge=auto_expunge)
 
             return items
 
-    def list_and_count(
+    async def list_and_count(
         self,
-        statement: Select[Any] | None = None,
+        statement: Select[tuple[T]] | None = None,
         auto_expunge: bool | None = None,
         **kwargs: Any,
-    ) -> tuple[list[T], int]:
-        statement = self._get_statement(statement)
-        statement = self._where_from_kwargs(statement, **kwargs)
-        statement = self._paginate_from_kwargs(statement, **kwargs)
-        statement = self._order_by_from_kwargs(statement, **kwargs)
-
-        count_statement = statement.with_only_columns(sqla_func.count()).select_from(
-            self.model
-        )
-
+    ) -> tuple[Sequence[T], int]:
         with sql_error_handler():
-            count_result = (self.session.execute(count_statement)).scalar() or 0
-            items = list((self.session.execute(statement)).scalars())
+            stmt = self._get_statement(statement)
+            stmt = self._where_from_kwargs(stmt, **kwargs)
+
+            count_stmt = select(sqla_func.count()).select_from(
+                stmt.with_only_columns(self._get_model_id_attr()).subquery()
+            )
+
+            count_result = await self.session.execute(count_stmt)
+            total_count = count_result.scalar_one_or_none() or 0
+
+            list_stmt = self._paginate_from_kwargs(stmt, **kwargs)
+            list_stmt = self._order_by_from_kwargs(list_stmt, **kwargs)
+
+            items_result = await self.session.execute(list_stmt)
+            items = list(items_result.scalars().all())
 
             for item in items:
                 self._expunge(item, auto_expunge=auto_expunge)
-            return (items, count_result)
 
-    def update(
+            return items, total_count
+
+    async def update(
         self,
         data: T,
         *,
@@ -315,11 +314,18 @@ class SQLAlchemyService(Generic[T, U]):
         with_for_update: bool | None = None,
     ) -> T:
         with sql_error_handler():
-            data_id = getattr(data, self.model_id_attr_name)
-            self.get(id=data_id)
-            instance = self._attach_to_session(data, strategy="merge")
-            self._flush_or_commit(auto_commit=auto_commit)
-            self._refresh(
+            if data not in self.session:
+                try:
+                    instance = await self.session.merge(data)
+                except Exception as exc:
+                    logger.error(f"Failed to merge instance for update: {exc}", exc_info=True)
+                    raise ServiceError("Failed to merge data for update.") from exc
+
+            else:
+                instance = data
+
+            await self._flush_or_commit(auto_commit=auto_commit)
+            await self._refresh(
                 instance,
                 attribute_names=attribute_names,
                 with_for_update=with_for_update,

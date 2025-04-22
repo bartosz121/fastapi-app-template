@@ -1,0 +1,37 @@
+name: lint, typecheck, test
+
+on: [push, pull_request]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: uv install
+        run: uv sync --dev
+
+      - name: ruff
+        run: uv run task lint_check
+
+      - name: pyright
+        run: uv run task typecheck
+
+      - name: Run tests
+        env:
+          DB_URL: sqlite+aiosqlite:///test.db
+          SECRET: cdd934f9ba2d8bcc2100fbbdbf32e7dc
+          AUTH_COOKIE_NAME: todo_auth
+          AUTH_COOKIE_DOMAIN: 127.0.0.1
+          PROMETHEUS_MULTIPROC_DIR: /tmp/prometheus
+        run: uv run pytest -vv

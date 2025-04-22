@@ -1,0 +1,20 @@
+services:
+  api:
+    environment:
+      - PROMETHEUS_MULTIPROC_DIR=
+    command: uvicorn --factory todo_api.main:create_app --host 0.0.0.0 --port 8000 --reload
+    develop:
+      watch:
+        - path: ../uv.lock
+          action: rebuild
+        - path: ../pyproject.toml
+          action: rebuild
+        - path: ../
+          target: /app
+          action: sync
+          ignore:
+            - .venv/
+            - .ruff_cache/
+            - .pytest_cache/
+            - .vscode/
+            - .docker/

@@ -10,7 +10,8 @@ class TodoBase(BaseModel):
 class TodoRead(Timestamp, TodoBase, BaseModelId[int]): ...
 
 
-class TodoCreate(TodoBase): ...
+class TodoCreate(TodoBase):
+    is_completed: bool = False
 
 
 class TodoUpdate(TodoBase): ...

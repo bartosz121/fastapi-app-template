@@ -1,9 +1,9 @@
+from collections.abc import Sequence
 from math import ceil
 from typing import (
     Annotated,
     Generic,
     NamedTuple,
-    Sequence,
     TypeVar,
     cast,
 )
@@ -11,13 +11,13 @@ from typing import (
 from fastapi import Depends, Query
 from pydantic import Field
 
-from todo_api.core.exceptions import BaseError
+from todo_api.core.exceptions import TodoApiError
 from todo_api.core.schemas import BaseModel
 
 ModelT = TypeVar("ModelT")
 
 
-class PaginationError(BaseError): ...
+class PaginationError(TodoApiError): ...
 
 
 class PaginationParams(NamedTuple):

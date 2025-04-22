@@ -16,6 +16,9 @@ from todo_api.utils import utc_now
 log = getLogger(__name__)
 
 
+class Anonymous: ...
+
+
 class Token(BaseModel):
     user_id: int
     expires_at: datetime
@@ -28,11 +31,9 @@ class Token(BaseModel):
         return int(dt.timestamp())
 
     @classmethod
-    def from_jwt(cls, token_str: str) -> Self | None:
+    def from_str(cls, token_str: str) -> Self | None:
         try:
-            decoded = auth_jwt.decode(
-                token=token_str, secret=settings.SECRET.get_secret_value()
-            )
+            decoded = auth_jwt.decode(token=token_str, secret=settings.SECRET.get_secret_value())
             token = cls.model_validate(decoded)
         except (
             KeyError,

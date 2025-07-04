@@ -21,10 +21,10 @@ jobs:
       - name: uv install
         run: uv sync --dev
 
-      - name: ruff
-        run: uv run task lint_check
+      - name: ruff lint
+        run: uv run task lint
 
-      - name: pyright
+      - name: pyright typecheck
         run: uv run task typecheck
 
       - name: Run tests

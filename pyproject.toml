@@ -7,38 +7,38 @@ authors = [{ name = "bartosz121", email = "bmagiera121@gmail.com" }]
 readme = "README.md"
 dependencies = [
     "fastapi==0.115.12",
-    "argon2-cffi>=23.1.0",
-    "httptools>=0.6.4",
-    "passlib>=1.7.4",
-    "prometheus-client>=0.21.1",
-    "pydantic-settings>=2.8.1",
-    "pyjwt>=2.10.1",
-    "sqlalchemy[asyncio]>=2.0.40",
-    "structlog>=25.2.0",
-    "uvicorn[standard]>=0.34.1",
-    "uvloop>=0.21.0",
-    "taskipy>=1.14.1",
-    "aiosqlite>=0.21.0",
-    "alembic>=1.15.2",
+    "argon2-cffi>=23.1.0,<24",
+    "httptools>=0.6.4,<0.7",
+    "passlib>=1.7.4,<1.8",
+    "prometheus-client>=0.21.1,<0.22",
+    "pydantic-settings>=2.8.1,<3",
+    "pyjwt>=2.10.1,<3",
+    "sqlalchemy[asyncio]>=2.0.40,<3",
+    "structlog>=25.2.0,<26",
+    "uvicorn[standard]>=0.34.1,<0.35",
+    "uvloop>=0.21.0,<0.22",
+    "taskipy>=1.14.1,<1.15",
+    "aiosqlite>=0.21.0,<0.22",
+    "alembic>=1.15.2,<1.16",
 ]
 
 
 [dependency-groups]
 dev = [
-    "ruff>=0.11.5",
-    "pyright>=1.1.399",
-    "pytest>=8.3.5",
-    "pytest-cov>=6.1.1",
-    "pytest-mock>=3.14.0",
-    "pytest-sugar>=1.0.0",
-    "coverage[toml]>=7.8.0",
+    "ruff>=0.12.2",
+    "pyright>=1.1.402",
+    "pytest>=8.3.5,<9",
+    "pytest-cov>=6.1.1,<7",
+    "pytest-mock>=3.14.0,<4",
+    "pytest-sugar>=1.0.0,<2",
+    "coverage[toml]>=7.8.0,<8",
     "faker>=37.1.0",
-    "hypothesis>=6.131.0",
+    "hypothesis>=6.131.0,<7",
     "types-passlib>=1.7.7.20250408",
-    "sqlalchemy-utils>=0.41.2",
-    "httpx>=0.28.1",
-    "pytest-asyncio>=0.26.0",
-    "asgi-lifespan>=2.1.0",
+    "sqlalchemy-utils>=0.41.2,<0.42",
+    "httpx>=0.28.1,<0.29",
+    "pytest-asyncio>=0.26.0,<0.27",
+    "asgi-lifespan>=2.1.0,<3",
 ]
 
 [build-system]
@@ -78,6 +78,6 @@ asyncio_default_fixture_loop_scope = "function"
 markers = ["auth"]
 
 [tool.taskipy.tasks]
-lint = { cmd = "ruff format . && ruff check --fix ." }
-lint_check = { cmd = "ruff format --check . && ruff check ." }
+format = { cmd = "ruff format . && ruff check --fix ." }
+lint = { cmd = "ruff format --check . && ruff check ." }
 typecheck = { cmd = "pyright --warnings ." }

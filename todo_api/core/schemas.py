@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel as BaseModel_, ConfigDict
 from pydantic.alias_generators import to_camel
@@ -14,7 +14,7 @@ class BaseModel(BaseModel_):
 
 
 # Just to make `id` appear first in openapi schema
-class BaseModelId(BaseModel, Generic[T]):
+class BaseModelId[T](BaseModel):
     id: T
 
 

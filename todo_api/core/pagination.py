@@ -2,7 +2,6 @@ from collections.abc import Sequence
 from math import ceil
 from typing import (
     Annotated,
-    Generic,
     NamedTuple,
     TypeVar,
     cast,
@@ -47,7 +46,7 @@ async def get_pagination_params(
 PaginationParamsQuery = Annotated[PaginationParams, Depends(get_pagination_params)]
 
 
-class Paginated(BaseModel, Generic[ModelT]):
+class Paginated[ModelT](BaseModel):
     items: Sequence[ModelT]
     page: Annotated[int, Field(gt=0, description="Page number")]
     size: Annotated[int, Field(gt=0, le=100, description="Page size")]

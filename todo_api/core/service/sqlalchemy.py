@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
-from typing import Any, Generic, Literal, NamedTuple, TypeVar
+from typing import Any, Literal, NamedTuple, TypeVar
 
 import structlog
 from sqlalchemy import Select, asc, desc, func as sqla_func, select
@@ -45,7 +45,7 @@ SelectT = TypeVar("SelectT", bound=Select[Any])
 RESERVED_KWARGS = {"offset", "limit", "order_by"}
 
 
-class SQLAlchemyService(Generic[T, U]):
+class SQLAlchemyService[T, U]:
     model: type[T]
     model_id_attr_name: str = "id"
 

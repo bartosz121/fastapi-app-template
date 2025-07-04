@@ -1,0 +1,10 @@
+from sqlalchemy.orm import Mapped, mapped_column
+
+from todo_api.core.database.base import Model
+from todo_api.core.database.mixins import TimestampMixin
+
+
+class {{ package_name | capitalize }}(TimestampMixin, Model):
+    __tablename__ = "{{ package_name }}s"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement=True)

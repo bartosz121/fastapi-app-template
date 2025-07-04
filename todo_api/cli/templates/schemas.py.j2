@@ -1,0 +1,17 @@
+from todo_api.core.schemas import BaseModel, BaseModelId
+
+
+class {{ package_name | capitalize }}Base(BaseModel):
+    pass
+
+
+class {{ package_name | capitalize }}Read({{ package_name | capitalize }}Base, BaseModelId[int]):
+    pass
+
+
+class {{ package_name | capitalize }}Create({{ package_name | capitalize }}Base):
+    pass
+
+
+class {{ package_name | capitalize }}Update({{ package_name | capitalize }}Base):
+    pass

@@ -1,0 +1,6 @@
+from todo_api.core.service.sqlalchemy import SQLAlchemyService
+from todo_api.{{ package_name }}.models import {{ package_name | capitalize }}
+
+
+class {{ package_name | capitalize }}Service(SQLAlchemyService[{{ package_name | capitalize }}, int]):
+    model = {{ package_name | capitalize }}

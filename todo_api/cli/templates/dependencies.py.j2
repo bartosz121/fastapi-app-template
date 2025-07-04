@@ -1,0 +1,13 @@
+from typing import Annotated
+
+from fastapi import Depends
+
+from todo_api.core.database.dependencies import AsyncDbSession
+from todo_api.{{ package_name }}.service import {{ package_name | capitalize }}Service as {{ package_name | capitalize }}Service_
+
+
+def get_{{ package_name }}_service(session: AsyncDbSession) -> {{ package_name | capitalize }}Service_:
+    return {{ package_name | capitalize }}Service_(session)
+
+
+{{ package_name | capitalize }}Service = Annotated[{{ package_name | capitalize }}Service_, Depends(get_{{ package_name }}_service)]

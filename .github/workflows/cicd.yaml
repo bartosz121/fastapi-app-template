@@ -22,10 +22,10 @@ jobs:
         run: uv sync --dev
 
       - name: ruff lint
-        run: uv run task lint
+        run: uv run poe lint
 
       - name: pyright typecheck
-        run: uv run task typecheck
+        run: uv run poe typecheck
 
       - name: Run tests
         env:

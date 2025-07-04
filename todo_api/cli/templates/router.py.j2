@@ -1,0 +1,54 @@
+from fastapi import APIRouter, status
+
+from todo_api.auth.dependencies import CurrentUser
+from todo_api.{{ package_name }} import dependencies, schemas
+
+router = APIRouter(prefix="/{{ package_name }}s", tags=["{{ package_name }}s"])
+
+
+@router.get("", response_model=list[schemas.{{ package_name | capitalize }}Read])
+async def get_{{ package_name }}_list(
+    service: dependencies.{{ package_name | capitalize }}Service,
+):
+    return await service.list_()
+
+
+@router.get("/{id}", response_model=schemas.{{ package_name | capitalize }}Read)
+async def get_{{ package_name }}_by_id(
+    id: int,
+    user: CurrentUser,
+    service: dependencies.{{ package_name | capitalize }}Service,
+):
+    pass
+
+
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.{{ package_name | capitalize }}Read,
+)
+async def create_{{ package_name }}(
+    data: schemas.{{ package_name | capitalize }}Create,
+    user: CurrentUser,
+    service: dependencies.{{ package_name | capitalize }}Service,
+):
+    pass
+
+
+@router.put("/{id}", response_model=schemas.{{ package_name | capitalize }}Read)
+async def update_{{ package_name }}(
+    id: int,
+    data: schemas.{{ package_name | capitalize }}Update,
+    user: CurrentUser,
+    service: dependencies.{{ package_name | capitalize }}Service,
+):
+    pass
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_{{ package_name }}(
+    id: int,
+    user: CurrentUser,
+    service: dependencies.{{ package_name | capitalize }}Service,
+):
+    pass

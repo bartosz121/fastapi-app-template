@@ -3,8 +3,13 @@ from fastapi.requests import Request
 from fastapi.responses import Response
 
 from todo_api.auth import service as auth_service
-from todo_api.auth.dependencies import CurrentUser, CurrentUserOrAnonymous
-from todo_api.auth.schemas import Anonymous
+from todo_api.auth.dependencies import (
+    AnonymousUser,
+    CurrentUser,
+    CurrentUserOrAnonymous,
+    UserSessionService,
+)
+from todo_api.auth.models import UserSession
 from todo_api.core import exceptions
 from todo_api.core.config import settings
 from todo_api.users import dependencies, schemas, security
@@ -47,8 +52,9 @@ async def login(
     data: schemas.UserCreate,
     user_auth: CurrentUserOrAnonymous,
     user_service: dependencies.UserService,
+    user_session_service: UserSessionService,
 ):
-    if not isinstance(user_auth, Anonymous):
+    if not isinstance(user_auth, AnonymousUser):
         raise exceptions.Forbidden(code=exceptions.ErrorCode.ALREADY_LOGGED_IN)
 
     user = await user_service.get_one_or_none(username=data.username)
@@ -64,18 +70,22 @@ async def login(
             code=exceptions.ErrorCode.INVALID_USERNAME_OR_PASSWORD,
         )
 
-    token = auth_service.create_token(user.id)
+    expires_at = auth_service.create_user_session_expires_at(
+        ttl=settings.get_user_session_ttl_timedelta()
+    )
+    user_session = UserSession(user_id=user.id, expires_at=expires_at)
+    created_session = await user_session_service.create(user_session)
 
     is_localhost = request.url.hostname in ["127.0.0.1", "localhost"]
-    secure = False if is_localhost else True
+    secure = not is_localhost
     auth_service.set_auth_cookie(
         response,
-        token,
-        expires_in=settings.JWT_EXPIRATION,
+        created_session.session_token,
+        expires_in=settings.USER_SESSION_TTL,
         secure=secure,
     )
 
-    return {"token": token}
+    return {"token": created_session.session_token}
 
 
 @router.post(
@@ -98,7 +108,7 @@ async def register(
     user_auth: CurrentUserOrAnonymous,
     user_service: dependencies.UserService,
 ):
-    if not isinstance(user_auth, Anonymous):
+    if not isinstance(user_auth, AnonymousUser):
         raise exceptions.Forbidden(code=exceptions.ErrorCode.ALREADY_LOGGED_IN)
 
     username_exists = await user_service.exists(username=data.username)
@@ -120,9 +130,16 @@ async def register(
 async def logout(
     request: Request,
     response: Response,
+    user_session_service: UserSessionService,
 ):
+    session_token = request.cookies.get(settings.AUTH_COOKIE_NAME)
+    if session_token:
+        user_session = await user_session_service.get_one_or_none(session_token=session_token)
+        if user_session:
+            await user_session_service.delete(user_session.id, auto_commit=True)
+
     is_localhost = request.url.hostname in ["127.0.0.1", "localhost"]
-    secure = False if is_localhost else True
+    secure = not is_localhost
     auth_service.set_logout_cookie(
         response,
         secure=secure,

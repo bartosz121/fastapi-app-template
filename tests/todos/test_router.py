@@ -131,8 +131,12 @@ async def test_get_user_todos_sorting(
     assert data["items"][0]["title"] == "Second"
     assert data["items"][1]["title"] == "First"
 
-    response = await client.get("/api/v1/todos/me?orderBy=updatedAt.asc")
+    response = await client.get("/api/v1/todos/me?orderBy=updatedAt.desc")
     assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["items"][0]["title"] == "Second"
+    assert data["items"][1]["title"] == "First"
 
 
 async def test_get_user_todos_unauthenticated(client: httpx.AsyncClient, auth_as: Anonymous):

@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 class TodoOrderBy(str, Enum):
     created_at = "createdAt"
-    upadted_at = "upadtedAt"
+    updated_at = "updatedAt"
 
 
 router = APIRouter(prefix="/todos", tags=["todos"])

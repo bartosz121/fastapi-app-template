@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tests.fixtures.auth import AuthenticateAs
 from tests.fixtures.database import SaveModel
 from tests.fixtures.objects import create_user
-from todo_api.auth.schemas import Anonymous
+from todo_api.auth.dependencies import AnonymousUser
 from todo_api.core.exceptions import ErrorCode
 from todo_api.todos.models import Todo
 from todo_api.users.models import User
@@ -139,7 +139,7 @@ async def test_get_user_todos_sorting(
     assert data["items"][1]["title"] == "First"
 
 
-async def test_get_user_todos_unauthenticated(client: httpx.AsyncClient, auth_as: Anonymous):
+async def test_get_user_todos_unauthenticated(client: httpx.AsyncClient, auth_as: AnonymousUser):
     """Test getting user todos fails when effectively unauthenticated"""
     response = await client.get("/api/v1/todos/me")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -187,7 +187,7 @@ async def test_get_todo_by_id_forbidden(
 
 
 async def test_get_todo_by_id_unauthenticated(
-    client: httpx.AsyncClient, save_model_fixture: SaveModel, auth_as: Anonymous
+    client: httpx.AsyncClient, save_model_fixture: SaveModel, auth_as: AnonymousUser
 ):
     owner_user = await create_user(save_model_fixture, username="owner_for_unauth_test")
     todo = Todo(user_id=owner_user.id, title="Auth Test Todo")
@@ -253,10 +253,10 @@ async def test_update_todo_forbidden(
 async def test_update_todo_unauthenticated(
     client: httpx.AsyncClient,
     save_model_fixture: SaveModel,
-    auth_as: Anonymous,
+    auth_as: AnonymousUser,
 ):
     """Test updating a todo fails when not authenticated"""
-    assert isinstance(auth_as, Anonymous)
+    assert isinstance(auth_as, AnonymousUser)
     owner_user = await create_user(save_model_fixture, username="owner_for_unauth_update")
     todo = Todo(user_id=owner_user.id, title="Update Auth Test")
     await save_model_fixture(todo)
@@ -319,7 +319,7 @@ async def test_delete_todo_unauthenticated(
     client: httpx.AsyncClient,
     save_model_fixture: SaveModel,
     session: AsyncSession,
-    auth_as: User | Anonymous,
+    auth_as: User | AnonymousUser,
 ):
     """Test deleting a todo fails when not authenticated"""
     owner_user = await create_user(save_model_fixture, username="owner_for_unauth_delete")

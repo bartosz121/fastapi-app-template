@@ -41,8 +41,7 @@ import pytest
 import pytest_asyncio
 
 from tests.fixtures.database import SaveModel
-from todo_api.auth.schemas import Anonymous
-from todo_api.users import security
+from todo_api.auth.dependencies import AnonymousUser
 from todo_api.users.models import User
 from todo_api.users.security import get_password_hash
 
@@ -54,24 +53,17 @@ class AuthenticateAs:
     password: str | None = None
 
 
-async def create_test_user(save_model_fixture: SaveModel, username: str, password: str) -> User:
-    hashed_password = security.get_password_hash(password)
-    user = User(username=username, hashed_password=hashed_password)
-    await save_model_fixture(user)
-    return user
-
-
 @pytest_asyncio.fixture
 async def auth_as(
     request: pytest.FixtureRequest, save_model_fixture: SaveModel
-) -> User | Anonymous | None:
+) -> User | AnonymousUser | None:
     authenticate_as: AuthenticateAs = request.param
 
     if authenticate_as.type_ == "dont_override":
         return None
 
     if authenticate_as.type_ == "anonymous":
-        return Anonymous()
+        return AnonymousUser()
 
     uuid_ = str(uuid.uuid4())
     username = authenticate_as.username or "user" + "/" + uuid_

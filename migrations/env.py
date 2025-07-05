@@ -9,6 +9,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from todo_api.auth.models import *
 from todo_api.core.config import settings
 from todo_api.core.database.base import Model
 from todo_api.todos.models import *

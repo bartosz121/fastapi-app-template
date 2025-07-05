@@ -1,3 +1,4 @@
+from datetime import timedelta
 from enum import StrEnum
 from typing import Literal
 
@@ -41,6 +42,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "DEBUG"
 
     SECRET: SecretStr = SecretStr("Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4")
+    USER_SESSION_TTL: int = 24 * 31  # hours
     AUTH_COOKIE_NAME: str = "todo_auth"
     AUTH_COOKIE_DOMAIN: str = "127.0.0.1"
     JWT_EXPIRATION: int = 3600 * 72  # seconds
@@ -59,6 +61,9 @@ class Settings(BaseSettings):
         if driver is None:
             return self.DB_SCHEME
         return f"sqlite+{driver}:///database.db"
+
+    def get_user_session_ttl_timedelta(self) -> timedelta:
+        return timedelta(hours=self.USER_SESSION_TTL)
 
     # postgres
     # def get_postgres_dsn(self, driver: Literal["asyncpg", "psycopg2"]) -> str:

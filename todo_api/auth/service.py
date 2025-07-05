@@ -1,17 +1,18 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from fastapi.responses import Response
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from todo_api.auth import jwt as auth_jwt
-from todo_api.auth.schemas import Token
+from todo_api.auth.models import UserSession
 from todo_api.core.config import settings
-from todo_api.users.models import User
+from todo_api.core.service.sqlalchemy import SQLAlchemyService
 from todo_api.utils import utc_now
 
 
-def get_token_from_auth_header(auth_header: str | None) -> str | None:
+class UserSessionService(SQLAlchemyService[UserSession, int]):
+    model = UserSession
+
+
+def get_session_token_from_header(auth_header: str | None) -> str | None:
     if auth_header:
         try:
             scheme, token = auth_header.split()
@@ -19,31 +20,11 @@ def get_token_from_auth_header(auth_header: str | None) -> str | None:
                 return token
         except ValueError:
             pass
-
     return None
 
 
-def create_token(user_id: int, expires_in: timedelta | None = None) -> str:
-    if expires_in is None:
-        expires_in = timedelta(seconds=settings.JWT_EXPIRATION)
-
-    expires_at = utc_now() + expires_in
-
-    token = Token(user_id=user_id, expires_at=expires_at)
-
-    encoded = auth_jwt.encode(
-        data=token.model_dump(mode="json"),
-        secret=settings.SECRET.get_secret_value(),
-        expires_at=token.expires_at,
-    )
-    return encoded
-
-
-async def get_user_from_token(session: AsyncSession, token: Token) -> User | None:
-    user = (
-        await session.execute(select(User).where(User.id == token.user_id))
-    ).scalar_one_or_none()
-    return user
+def create_user_session_expires_at(*, ttl: timedelta) -> datetime:
+    return utc_now() + ttl
 
 
 def set_auth_cookie(
@@ -69,7 +50,7 @@ def set_logout_cookie(
     response: Response,
     *,
     secure: bool = True,
-):
+) -> None:
     response.set_cookie(
         settings.AUTH_COOKIE_NAME,
         value="",

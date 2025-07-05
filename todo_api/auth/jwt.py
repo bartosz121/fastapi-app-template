@@ -10,8 +10,8 @@ def encode(*, data: dict[str, Any], secret: str, expires_at: datetime) -> str:
     data_to_encode = data.copy()
     data_to_encode["expires_at"] = int(expires_at.timestamp())
 
-    return jwt.encode(data_to_encode, secret, algorithm=ALGORITHM)
+    return jwt.encode(data_to_encode, secret, algorithm=ALGORITHM)  # pyright: ignore[reportUnknownMemberType]
 
 
 def decode(*, token: str, secret: str) -> dict[str, Any]:
-    return jwt.decode(token, secret, algorithms=[ALGORITHM])
+    return jwt.decode(token, secret, algorithms=[ALGORITHM])  # pyright: ignore[reportUnknownMemberType]

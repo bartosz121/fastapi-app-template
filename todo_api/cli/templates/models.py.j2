@@ -8,3 +8,6 @@ class {{ package_name | capitalize }}(TimestampMixin, Model):
     __tablename__ = "{{ package_name }}s"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+
+__all__ = ("{{ package_name | capitalize }}",)

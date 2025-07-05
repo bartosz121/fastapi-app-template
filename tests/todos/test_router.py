@@ -9,7 +9,7 @@ from tests.fixtures.auth import AuthenticateAs
 from tests.fixtures.database import SaveModel
 from tests.fixtures.objects import create_user
 from todo_api.auth.schemas import Anonymous
-from todo_api.core.exceptions import Codes
+from todo_api.core.exceptions import ErrorCode
 from todo_api.todos.models import Todo
 from todo_api.users.models import User
 
@@ -131,8 +131,12 @@ async def test_get_user_todos_sorting(
     assert data["items"][0]["title"] == "Second"
     assert data["items"][1]["title"] == "First"
 
-    response = await client.get("/api/v1/todos/me?orderBy=updatedAt.asc")
+    response = await client.get("/api/v1/todos/me?orderBy=updatedAt.desc")
     assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["items"][0]["title"] == "Second"
+    assert data["items"][1]["title"] == "First"
 
 
 async def test_get_user_todos_unauthenticated(client: httpx.AsyncClient, auth_as: Anonymous):
@@ -179,7 +183,7 @@ async def test_get_todo_by_id_forbidden(
     response = await client.get(f"/api/v1/todos/{todo.id}")
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()["detail"]["code"] == Codes.NOT_OWNER
+    assert response.json()["code"] == ErrorCode.NOT_OWNER
 
 
 async def test_get_todo_by_id_unauthenticated(
@@ -243,7 +247,7 @@ async def test_update_todo_forbidden(
     response = await client.put(f"/api/v1/todos/{todo.id}", json=update_payload)
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()["detail"]["code"] == Codes.NOT_OWNER
+    assert response.json()["code"] == ErrorCode.NOT_OWNER
 
 
 async def test_update_todo_unauthenticated(
@@ -305,7 +309,7 @@ async def test_delete_todo_forbidden(
     response = await client.delete(f"/api/v1/todos/{todo_id}")
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()["detail"]["code"] == Codes.NOT_OWNER
+    assert response.json()["code"] == ErrorCode.NOT_OWNER
 
     db_todo = await session.get(Todo, todo_id)
     assert db_todo is not None

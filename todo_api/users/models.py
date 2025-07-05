@@ -11,3 +11,6 @@ class User(TimestampMixin, Model):
     id: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String(64))
     hashed_password: Mapped[str] = mapped_column(String)
+
+
+__all__ = ("User",)

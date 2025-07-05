@@ -1,0 +1,106 @@
+import httpx
+import pytest
+from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from tests.fixtures.database import SaveModel
+from todo_api.{{ package_name }}.models import {{ package_name | capitalize }}
+
+
+async def test_create_{{ package_name }}_success(
+    client: httpx.AsyncClient, session: AsyncSession
+):
+    payload = {"name": "Test {{ package_name | capitalize }}"}
+    response = await client.post("/api/v1/{{ package_name }}s", json=payload)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    data = response.json()
+    assert data["name"] == payload["name"]
+    assert "id" in data
+    assert "createdAt" in data
+    assert "updatedAt" in data
+
+    db_{{ package_name }} = await session.get({{ package_name | capitalize }}, data["id"])
+    assert db_{{ package_name }} is not None
+    assert db_{{ package_name }}.name == payload["name"]
+
+
+async def test_get_{{ package_name }}_list_success(
+    client: httpx.AsyncClient, save_model_fixture: SaveModel
+):
+    {{ package_name }}_1 = {{ package_name | capitalize }}(name="Test {{ package_name | capitalize }} 1")
+    {{ package_name }}_2 = {{ package_name | capitalize }}(name="Test {{ package_name | capitalize }} 2")
+    await save_model_fixture({{ package_name }}_1)
+    await save_model_fixture({{ package_name }}_2)
+
+    response = await client.get("/api/v1/{{ package_name }}s")
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 2
+    assert data[0]["name"] == {{ package_name }}_1.name
+    assert data[1]["name"] == {{ package_name }}_2.name
+
+
+async def test_get_{{ package_name }}_by_id_success(
+    client: httpx.AsyncClient, save_model_fixture: SaveModel
+):
+    {{ package_name }} = {{ package_name | capitalize }}(name="Test {{ package_name | capitalize }}")
+    await save_model_fixture({{ package_name }})
+
+    response = await client.get(f"/api/v1/{{ package_name }}s/{{ '{' }}{{ package_name }}.id{{ '}' }}")
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["name"] == {{ package_name }}.name
+
+
+async def test_get_{{ package_name }}_by_id_not_found(client: httpx.AsyncClient):
+    response = await client.get("/api/v1/{{ package_name }}s/999")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+async def test_update_{{ package_name }}_success(
+    client: httpx.AsyncClient, save_model_fixture: SaveModel, session: AsyncSession
+):
+    {{ package_name }} = {{ package_name | capitalize }}(name="Test {{ package_name | capitalize }}")
+    await save_model_fixture({{ package_name }})
+
+    payload = {"name": "Updated {{ package_name | capitalize }}"}
+    response = await client.put(f"/api/v1/{{ package_name }}s/{{ '{' }}{{ package_name }}.id{{ '}' }}", json=payload)
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["name"] == payload["name"]
+
+    await session.refresh({{ package_name }})
+    assert {{ package_name }}.name == payload["name"]
+    assert {{ package_name }}.updated_at > {{ package_name }}.created_at
+
+
+async def test_update_{{ package_name }}_not_found(client: httpx.AsyncClient):
+    payload = {"name": "Updated {{ package_name | capitalize }}"}
+    response = await client.put("/api/v1/{{ package_name }}s/999", json=payload)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+async def test_delete_{{ package_name }}_success(
+    client: httpx.AsyncClient, save_model_fixture: SaveModel, session: AsyncSession
+):
+    {{ package_name }} = {{ package_name | capitalize }}(name="Test {{ package_name | capitalize }}")
+    await save_model_fixture({{ package_name }})
+
+    response = await client.delete(f"/api/v1/{{ package_name }}s/{{ '{' }}{{ package_name }}.id{{ '}' }}")
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    db_{{ package_name }} = await session.get({{ package_name | capitalize }}, {{ package_name }}.id)
+    assert db_{{ package_name }} is None
+
+
+async def test_delete_{{ package_name }}_not_found(client: httpx.AsyncClient):
+    response = await client.delete("/api/v1/{{ package_name }}s/999")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND

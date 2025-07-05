@@ -1,10 +1,12 @@
+# pyright: reportUnusedFunction=false
+
 import structlog
 from fastapi import FastAPI, Request, status
-from fastapi.exceptions import ResponseValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 
 from todo_api.core import exceptions as core_exceptions
-from todo_api.core.service import exceptions as service_exceptions
 
 log: structlog.BoundLogger = structlog.get_logger()
 
@@ -15,39 +17,45 @@ def configure(app: FastAPI) -> None:
         request: Request, exc: ResponseValidationError
     ) -> JSONResponse:
         log.error(str(exc))
+
+        content: core_exceptions.JSONResponseTodoApiError = {
+            "error": "Internal Server Error",
+            "code": core_exceptions.ErrorCode.RESPONSE_VALIDATION_ERROR,
+            "detail": None,
+        }
+
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "msg": "Internal response validation error",
-                "code": core_exceptions.Codes.RESPONSE_VALIDATION_ERROR,
-            },
+            content=content,
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_error(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        log.error(str(exc))
+        content: core_exceptions.JSONResponseTodoApiError = {
+            "error": "Unprocessable Entity",
+            "code": core_exceptions.ErrorCode.REQUEST_VALIDATION_ERROR,
+            "detail": jsonable_encoder(exc.errors()),
+        }
+
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content=content,
         )
 
     @app.exception_handler(core_exceptions.TodoApiError)
-    async def base_error_handler(
+    async def todo_api_error_error_handler(
         request: Request, exc: core_exceptions.TodoApiError
     ) -> JSONResponse:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"msg": "Internal server error", "code": None},
-        )
+        content: core_exceptions.JSONResponseTodoApiError = exc.to_json_error_dict()
+        log.error(content)
 
-    @app.exception_handler(service_exceptions.NotFoundError)
-    async def service_notfound_error_handler(
-        request: Request, exc: service_exceptions.NotFoundError
-    ) -> JSONResponse:
         return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={"msg": "Not found", "code": None},
-        )
-
-    @app.exception_handler(service_exceptions.ConflictError)
-    async def service_conflict_error_handler(
-        request: Request, exc: service_exceptions.ConflictError
-    ) -> JSONResponse:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content={"msg": "Conflict", "code": None},
+            status_code=exc.status_code,
+            content=content,
+            headers=exc.headers,
         )
 
 

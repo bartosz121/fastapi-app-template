@@ -14,3 +14,6 @@ class Todo(TimestampMixin, Model):
     is_completed: Mapped[bool] = mapped_column(default=False)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+
+__all__ = ("Todo",)

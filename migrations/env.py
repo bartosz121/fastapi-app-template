@@ -1,4 +1,6 @@
-# ruff: noqa: F401
+# ruff: noqa: F403
+# pyright: reportUnusedImport=false
+
 import asyncio
 from logging.config import fileConfig
 
@@ -9,8 +11,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from todo_api.core.config import settings
 from todo_api.core.database.base import Model
-from todo_api.todos.models import Todo
-from todo_api.users.models import User
+from todo_api.todos.models import *
+from todo_api.users.models import *
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

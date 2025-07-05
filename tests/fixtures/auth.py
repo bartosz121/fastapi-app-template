@@ -1,3 +1,38 @@
+"""
+This module provides a flexible authentication testing fixture for pytest
+
+Credits: https://github.com/polarsource
+
+The core of this system is the `auth_as` fixture, which is dynamically
+parameterized by the `pytest_generate_tests` hook. This allows tests to be
+run against different authentication states (e.g., anonymous, authenticated user)
+by simply applying a `@pytest.mark.auth` marker.
+
+How it works:
+
+1.  **`AuthenticateAs` Dataclass:** This dataclass defines the desired
+    authentication state for a test. It can specify the user type (`user`,
+    `anonymous`, or `dont_override`), and optionally a username and password.
+
+2.  **`@pytest.mark.auth` Marker:** Tests are marked with this to specify the
+    authentication state they should run in. For example:
+
+    ```python
+    @pytest.mark.auth(AuthenticateAs(type_="user"))
+    def test_some_feature(auth_as: User, client: httpx.AsyncClient):
+        ...
+    ```
+
+3.  **`pytest_generate_tests` Hook:** This hook intercepts the test generation
+    process. If a test uses the `auth_as` fixture, it looks for a `@pytest.mark.auth`
+    marker. Based on the marker's arguments, it generates parameterized versions
+    of the test for each specified authentication state.
+
+4.  **`auth_as` Fixture:** This fixture receives the `AuthenticateAs` object from
+    `pytest_generate_tests`. It then creates the appropriate user in the database
+    (or returns an `Anonymous` object) and makes it available to the test function.
+"""
+
 import uuid
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -63,7 +98,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
                     raise ValueError(
                         f"auth marker arguments must be of type 'AuthenticateAs', got {type(arg)}"
                     )
-                pytest_params.append(pytest.param(arg, id=repr(arg)))
+                pytest_params.append(pytest.param(arg, id=repr(arg)))  # type: ignore
         else:
             pytest_params = [pytest.param(AuthenticateAs(type_="anonymous"))]
 

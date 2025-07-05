@@ -8,13 +8,12 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
-from todo_api.core.service.exceptions import (
-    ConflictError,
-    NotFoundError,
-    ServiceError,
-)
+from todo_api.core.exceptions import Conflict, NotFound, TodoApiError
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
+
+
+class ServiceError(TodoApiError): ...
 
 
 class OrderBy(NamedTuple):
@@ -28,14 +27,13 @@ def sql_error_handler():
         yield
     except IntegrityError as exc:
         logger.error(f"Database integrity error: {exc}", exc_info=True)
-        raise ConflictError("Database constraint violated.") from exc
+        raise Conflict() from exc
     except SQLAlchemyError as exc:
         logger.error(f"Database error during operation: {exc}", exc_info=True)
-        msg = "A database error occurred"
-        raise ServiceError(msg) from exc
+        raise ServiceError() from exc
     except AttributeError as exc:
         logger.error(f"Attribute error during service operation: {exc}", exc_info=True)
-        raise ServiceError("An internal error occurred due to invalid attribute access.") from exc
+        raise ServiceError() from exc
 
 
 T = TypeVar("T")
@@ -80,8 +78,10 @@ class SQLAlchemyService[T, U]:
         if strategy == "merge":
             return await self.session.merge(model)
 
-        msg = f"Strategy must be 'add' or handled within async methods like 'update', found:{strategy!r}"
-        raise ServiceError(msg)
+        logger.error(
+            f"Strategy must be 'add' or handled within async methods like 'update', found:{strategy!r}"
+        )
+        raise ServiceError()
 
     async def _flush_or_commit(self, auto_commit: bool | None = None) -> None:
         auto_commit_ = self.auto_commit if auto_commit is None else auto_commit
@@ -160,7 +160,7 @@ class SQLAlchemyService[T, U]:
     def check_not_found(self, item: T | None) -> T:
         if item is None:
             msg = "No record found"
-            raise NotFoundError(msg)
+            raise NotFound(detail=msg)
         return item
 
     async def count(self, statement: Select[tuple[T]] | None = None, **kwargs: Any) -> int:
@@ -319,7 +319,7 @@ class SQLAlchemyService[T, U]:
                     instance = await self.session.merge(data)
                 except Exception as exc:
                     logger.error(f"Failed to merge instance for update: {exc}", exc_info=True)
-                    raise ServiceError("Failed to merge data for update.") from exc
+                    raise ServiceError() from exc
 
             else:
                 instance = data

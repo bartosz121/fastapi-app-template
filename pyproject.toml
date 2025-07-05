@@ -77,6 +77,11 @@ exclude_lines = [
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = ["auth"]
+filterwarnings = [
+    "ignore:Accessing argon2.__version__ is deprecated:DeprecationWarning:passlib.handlers.argon2",
+    # This happens because the app is initialized for each test, which is fine for testing
+    "ignore:Repeated configuration attempted:RuntimeWarning:todo_api.core.logging",
+]
 
 [tool.poe.tasks]
 format = { shell = "ruff format . && ruff check --fix ." }

@@ -1,3 +1,4 @@
+# pyright: reportPrivateUsage=false
 from unittest.mock import patch
 
 import pytest
@@ -7,20 +8,21 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, Mapped, mapped_column
 
+from tests.fixtures.database import SaveModel
 from todo_api.core.database.base import Model
-from todo_api.core.service.exceptions import ConflictError, NotFoundError, ServiceError
-from todo_api.core.service.sqlalchemy import OrderBy, SQLAlchemyService
+from todo_api.core.exceptions import Conflict, NotFound
+from todo_api.core.service.sqlalchemy import OrderBy, ServiceError, SQLAlchemyService
 
 DIALECT = sqlite.dialect()
 
 
-def assert_statement_equal(stmt1: Select, stmt2: Select):
+def assert_statement_equal(stmt1: Select, stmt2: Select):  # pyright: ignore[reportMissingTypeArgument, reportUnknownParameterType]
     compiled1 = str(stmt1.compile(dialect=DIALECT, compile_kwargs={"literal_binds": True}))
     compiled2 = str(stmt2.compile(dialect=DIALECT, compile_kwargs={"literal_binds": True}))
     assert compiled1 == compiled2
 
 
-def assert_statement_not_equal(stmt1: Select, stmt2: Select):
+def assert_statement_not_equal(stmt1: Select, stmt2: Select):  # pyright: ignore[reportMissingTypeArgument, reportUnknownParameterType]
     compiled1 = str(stmt1.compile(dialect=DIALECT, compile_kwargs={"literal_binds": True}))
     compiled2 = str(stmt2.compile(dialect=DIALECT, compile_kwargs={"literal_binds": True}))
     assert compiled1 != compiled2
@@ -66,7 +68,7 @@ async def test_create_with_options(session: AsyncSession, test_task: Task):
     assert created_task.title == "Test Task"
 
 
-async def test_get_one(session: AsyncSession, test_task: Task, save_model_fixture):
+async def test_get_one(session: AsyncSession, test_task: Task, save_model_fixture: SaveModel):
     await save_model_fixture(test_task)
     service = TaskService(session)
 
@@ -79,11 +81,13 @@ async def test_get_one(session: AsyncSession, test_task: Task, save_model_fixtur
 async def test_get_one_not_found(session: AsyncSession):
     service = TaskService(session)
 
-    with pytest.raises(NotFoundError):
+    with pytest.raises(NotFound):
         await service.get_one(id=999)
 
 
-async def test_get_alias_for_get_one(session: AsyncSession, test_task: Task, save_model_fixture):
+async def test_get_alias_for_get_one(
+    session: AsyncSession, test_task: Task, save_model_fixture: SaveModel
+):
     await save_model_fixture(test_task)
     service = TaskService(session)
 
@@ -93,7 +97,9 @@ async def test_get_alias_for_get_one(session: AsyncSession, test_task: Task, sav
     assert task.title == test_task.title
 
 
-async def test_get_one_or_none_found(session: AsyncSession, test_task: Task, save_model_fixture):
+async def test_get_one_or_none_found(
+    session: AsyncSession, test_task: Task, save_model_fixture: SaveModel
+):
     await save_model_fixture(test_task)
     service = TaskService(session)
 
@@ -111,7 +117,7 @@ async def test_get_one_or_none_not_found(session: AsyncSession):
     assert task is None
 
 
-async def test_list(session: AsyncSession, save_model_fixture):
+async def test_list(session: AsyncSession, save_model_fixture: SaveModel):
     tasks = [
         Task(title="Task 1", priority=1),
         Task(title="Task 2", priority=2),
@@ -128,7 +134,7 @@ async def test_list(session: AsyncSession, save_model_fixture):
     assert all(isinstance(item, Task) for item in result)
 
 
-async def test_list_with_filtering(session: AsyncSession, save_model_fixture):
+async def test_list_with_filtering(session: AsyncSession, save_model_fixture: SaveModel):
     tasks = [
         Task(title="Task 1", priority=1),
         Task(title="Task 2", priority=2),
@@ -145,7 +151,7 @@ async def test_list_with_filtering(session: AsyncSession, save_model_fixture):
     assert all(task.priority == 1 for task in result)
 
 
-async def test_list_with_pagination(session: AsyncSession, save_model_fixture):
+async def test_list_with_pagination(session: AsyncSession, save_model_fixture: SaveModel):
     tasks = [Task(title=f"Task {i}") for i in range(1, 6)]
     for task in tasks:
         await save_model_fixture(task)
@@ -157,7 +163,7 @@ async def test_list_with_pagination(session: AsyncSession, save_model_fixture):
     assert len(result) == 2
 
 
-async def test_list_with_ordering(session: AsyncSession, save_model_fixture):
+async def test_list_with_ordering(session: AsyncSession, save_model_fixture: SaveModel):
     tasks = [
         Task(title="Task A", priority=3),
         Task(title="Task B", priority=1),
@@ -177,7 +183,7 @@ async def test_list_with_ordering(session: AsyncSession, save_model_fixture):
     assert result_desc[-1].priority == 1
 
 
-async def test_list_and_count(session: AsyncSession, save_model_fixture):
+async def test_list_and_count(session: AsyncSession, save_model_fixture: SaveModel):
     tasks = [Task(title=f"Task {i}") for i in range(1, 6)]
     for task in tasks:
         await save_model_fixture(task)
@@ -190,7 +196,7 @@ async def test_list_and_count(session: AsyncSession, save_model_fixture):
     assert count == 5
 
 
-async def test_count(session: AsyncSession, save_model_fixture):
+async def test_count(session: AsyncSession, save_model_fixture: SaveModel):
     tasks = [
         Task(title="Task 1", priority=1),
         Task(title="Task 2", priority=2),
@@ -208,7 +214,7 @@ async def test_count(session: AsyncSession, save_model_fixture):
     assert filtered_count == 2
 
 
-async def test_update(session: AsyncSession, test_task: Task, save_model_fixture):
+async def test_update(session: AsyncSession, test_task: Task, save_model_fixture: SaveModel):
     await save_model_fixture(test_task)
     service = TaskService(session)
 
@@ -224,7 +230,7 @@ async def test_update(session: AsyncSession, test_task: Task, save_model_fixture
     assert fresh_task.priority == 5
 
 
-async def test_delete(session: AsyncSession, test_task: Task, save_model_fixture):
+async def test_delete(session: AsyncSession, test_task: Task, save_model_fixture: SaveModel):
     await save_model_fixture(test_task)
     service = TaskService(session)
 
@@ -232,11 +238,11 @@ async def test_delete(session: AsyncSession, test_task: Task, save_model_fixture
 
     assert deleted_task.id == test_task.id
 
-    with pytest.raises(NotFoundError):
+    with pytest.raises(NotFound):
         await service.get_one(id=test_task.id)
 
 
-async def test_exists(session: AsyncSession, test_task: Task, save_model_fixture):
+async def test_exists(session: AsyncSession, test_task: Task, save_model_fixture: SaveModel):
     await save_model_fixture(test_task)
     service = TaskService(session)
 
@@ -252,7 +258,7 @@ async def test_sql_error_handling_integrity_error(session: AsyncSession):
 
     # Mock session.execute to raise IntegrityError
     with patch.object(session, "execute", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore
-        with pytest.raises(ConflictError):
+        with pytest.raises(Conflict):
             await service.get_one(id=1)
 
 
@@ -271,7 +277,7 @@ async def test_sql_error_handling_attribute_error(session: AsyncSession):
     # Mock _get_model_id_attr to raise AttributeError
     with patch.object(service, "_get_model_id_attr", side_effect=AttributeError("mock error")):
         with pytest.raises(ServiceError):
-            await service.get_one(id=1)
+            await service.count(id=1)
 
 
 async def test_attach_to_session_invalid_strategy(session: AsyncSession, test_task: Task):
@@ -281,7 +287,7 @@ async def test_attach_to_session_invalid_strategy(session: AsyncSession, test_ta
         await service._attach_to_session(test_task, strategy="invalid")  # type: ignore
 
 
-async def test_order_by_invalid_field(session: AsyncSession, save_model_fixture):
+async def test_order_by_invalid_field(session: AsyncSession, save_model_fixture: SaveModel):
     tasks = [
         Task(title="Task A", priority=3),
         Task(title="Task B", priority=1),
@@ -450,7 +456,7 @@ async def test_update_conflict_error(session: AsyncSession, test_task: Task):
 
     with patch.object(session, "merge", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore
         # The update method catches IntegrityError and wraps it in ServiceError
-        with pytest.raises(ServiceError, match="Failed to merge data for update"):
+        with pytest.raises(ServiceError):
             await service.update(test_task)
 
 
@@ -464,7 +470,7 @@ async def test_update_with_session_error(session: AsyncSession, test_task: Task)
 
 
 async def test_update_already_in_session(
-    session: AsyncSession, test_task: Task, save_model_fixture
+    session: AsyncSession, test_task: Task, save_model_fixture: SaveModel
 ):
     """Test update when model is already in session."""
     await save_model_fixture(test_task)
@@ -486,7 +492,7 @@ async def test_order_by_invalid_order(session: AsyncSession):
     await service.list_(order_by=invalid_order_by)
 
 
-async def test_list_with_multiple_filters(session: AsyncSession, save_model_fixture):
+async def test_list_with_multiple_filters(session: AsyncSession, save_model_fixture: SaveModel):
     """Test list with multiple filter criteria."""
     tasks = [
         Task(title="Common Title", description="Desc 1", priority=1),

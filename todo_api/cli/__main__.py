@@ -3,12 +3,12 @@ from pathlib import Path
 
 import structlog
 from jinja2 import Environment, FileSystemLoader
-from poethepoet.app import PoeThePoet
+from poethepoet.app import PoeThePoet  # pyright: ignore[reportMissingTypeStubs]
 
 log: structlog.BoundLogger = structlog.get_logger()
 
 
-def add_package(args):
+def add_package(args: argparse.Namespace):
     """Creates a new package with the given name."""
     package_name = args.name
 

@@ -1,9 +1,14 @@
+# pyright: reportUnknownVariableType=false, reportMissingTypeStubs=false
 from collections.abc import AsyncIterator, Callable, Coroutine
 from typing import Any
 
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy_utils import create_database, database_exists, drop_database
+from sqlalchemy_utils import (
+    create_database,
+    database_exists,
+    drop_database,
+)
 
 from todo_api.core.config import settings
 from todo_api.core.database.base import Model

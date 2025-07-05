@@ -27,7 +27,7 @@ class Token(BaseModel):
         return self.expires_at < utc_now()
 
     @field_serializer("expires_at")
-    def serialize_expires_at(self, dt: datetime, _info) -> int:
+    def serialize_expires_at(self, dt: datetime) -> int:
         return int(dt.timestamp())
 
     @classmethod

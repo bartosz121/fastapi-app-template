@@ -10,13 +10,13 @@ from typing import (
 from fastapi import Depends, Query
 from pydantic import Field
 
-from todo_api.core.exceptions import TodoApiError
+from todo_api.core.exceptions import BadRequest
 from todo_api.core.schemas import BaseModel
 
 ModelT = TypeVar("ModelT")
 
 
-class PaginationError(TodoApiError): ...
+class PaginationError(BadRequest): ...
 
 
 class PaginationParams(NamedTuple):
@@ -63,7 +63,7 @@ class Paginated[ModelT](BaseModel):
         total: int | None = None,
     ) -> "Paginated[ModelT]":
         if size < 1:
-            raise PaginationError("size value must be > 0")
+            raise PaginationError(detail="Pagination size value must be > 0")
 
         total_count = total or len(items)
         pages = ceil(total_count / size) if total_count > 0 else 1

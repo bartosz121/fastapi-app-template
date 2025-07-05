@@ -1,11 +1,11 @@
-from todo_api.core.schemas import BaseModel, BaseModelId
+from todo_api.core.schemas import BaseModel, BaseModelId, Timestamp
 
 
 class {{ package_name | capitalize }}Base(BaseModel):
-    pass
+    name: str
 
 
-class {{ package_name | capitalize }}Read({{ package_name | capitalize }}Base, BaseModelId[int]):
+class {{ package_name | capitalize }}Read(Timestamp, {{ package_name | capitalize }}Base, BaseModelId[int]):
     pass
 
 
@@ -13,5 +13,5 @@ class {{ package_name | capitalize }}Create({{ package_name | capitalize }}Base)
     pass
 
 
-class {{ package_name | capitalize }}Update({{ package_name | capitalize }}Base):
-    pass
+class {{ package_name | capitalize }}Update(BaseModel):
+    name: str | None = None

@@ -48,7 +48,6 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 99
-target-version = "py313"
 
 [tool.ruff.lint]
 extend-select = ["Q", "RUF100", "C90", "UP", "I", "T20"]
@@ -57,7 +56,7 @@ mccabe = { max-complexity = 15 }
 
 [tool.pyright]
 pythonVersion = "3.13"
-typeCheckingMode = "standard"
+typeCheckingMode = "strict"
 reportUnnecessaryTypeIgnoreComment = true
 venvPath = ".venv"
 

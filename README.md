@@ -18,3 +18,15 @@
 **Note on Timezone Handling:**
 
 If switching from SQLite to another database (e.g., PostgreSQL), review `todo_api/auth/dependencies.py`. A `TODO:` comment indicates a SQLite-specific timezone conversion that may need removal or adjustment
+
+## Renaming the Project
+
+To rename the project from `todo_api` to a custom name, use the included script.
+
+**Usage:**
+
+```bash
+./rename_project.sh <new-project-name>
+```
+
+The script will rename the directory, update imports, and modify `pyproject.toml`. It is intended for one-time use.

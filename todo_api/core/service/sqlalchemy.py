@@ -66,7 +66,7 @@ class SQLAlchemyService[T, U]:
         self.auto_commit = auto_commit
 
     def _get_statement(self, statement: Select[tuple[T]] | None = None) -> Select[tuple[T]]:
-        return self.statement if statement is not None else select(self.model)
+        return statement if statement is not None else self.statement
 
     def _get_model_id_attr(self) -> InstrumentedAttribute[U]:
         return getattr(self.model, self.model_id_attr_name)

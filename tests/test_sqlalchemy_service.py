@@ -447,7 +447,7 @@ async def test_get_statement_with_custom(session: AsyncSession):
     custom_stmt = select(Task).where(Task.priority > 3)
     result = service._get_statement(custom_stmt)
 
-    assert_statement_not_equal(result, custom_stmt)
+    assert_statement_equal(result, custom_stmt)
 
 
 async def test_update_conflict_error(session: AsyncSession, test_task: Task):

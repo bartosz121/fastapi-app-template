@@ -38,7 +38,6 @@ def sql_error_handler():
 
 T = TypeVar("T")
 U = TypeVar("U")
-SelectT = TypeVar("SelectT", bound=Select[Any])
 
 RESERVED_KWARGS = {"offset", "limit", "order_by"}
 
@@ -55,9 +54,7 @@ class SQLAlchemyService[T, U]:
         auto_expunge: bool = False,
         auto_refresh: bool = True,
         auto_commit: bool = False,
-        **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)
         self.session = session
 
         self.statement = statement if statement is not None else select(self.model)

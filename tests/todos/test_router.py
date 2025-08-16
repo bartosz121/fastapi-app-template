@@ -68,7 +68,7 @@ async def test_get_user_todos_success(
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
 
-    assert data["totalCount"] == 2
+    assert data["total"] == 2
     assert data["page"] == 1
     assert len(data["items"]) == 2
 
@@ -88,7 +88,7 @@ async def test_get_user_todos_pagination(
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
 
-    assert data["totalCount"] == 3
+    assert data["total"] == 3
     assert data["page"] == 1
     assert data["size"] == 2
     assert len(data["items"]) == 2
@@ -97,7 +97,7 @@ async def test_get_user_todos_pagination(
     response = await client.get("/api/v1/todos/me?page=2&size=2")
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert data["totalCount"] == 3
+    assert data["total"] == 3
     assert data["page"] == 2
     assert data["size"] == 2
     assert len(data["items"]) == 1

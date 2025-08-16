@@ -35,20 +35,19 @@ async def get_user_todo(
     user: CurrentUser,
     todo_service: dependencies.TodoService,
 ):
-    total_todos = await todo_service.count(user_id=user.id)
-    todos = await todo_service.list_(
+    todos, total = await todo_service.list_and_count(
         user_id=user.id,
         offset=pagination_params.offset,
         limit=pagination_params.limit,
         order_by=order_by,
     )
 
-    return pagination.Paginated[schemas.TodoRead].create(
-        [schemas.TodoRead.model_validate(todo) for todo in todos],
-        size=pagination_params.size,
-        page=pagination_params.page,
-        total=total_todos,
-    )
+    return {
+        "items": todos,
+        "total": total,
+        "page": pagination_params.page,
+        "size": pagination_params.size,
+    }
 
 
 @router.get(

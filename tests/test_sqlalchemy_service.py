@@ -184,7 +184,7 @@ async def test_list_with_ordering(session: AsyncSession, save_model_fixture: Sav
 
 
 async def test_list_and_count(session: AsyncSession, save_model_fixture: SaveModel):
-    tasks = [Task(title=f"Task {i}") for i in range(1, 6)]
+    tasks = [Task(title=f"Task {i}", priority=100) for i in range(1, 6)]
     for task in tasks:
         await save_model_fixture(task)
 
@@ -194,6 +194,14 @@ async def test_list_and_count(session: AsyncSession, save_model_fixture: SaveMod
 
     assert len(items) == 2
     assert count == 5
+
+    tasks = [Task(title="TASK") for _ in range(1, 10)]
+    for task in tasks:
+        await save_model_fixture(task)
+
+    items, count = await service.list_and_count(title="TASK", limit=2)
+    assert items == [tasks[0], tasks[1]]
+    assert count == len(tasks)
 
 
 async def test_count(session: AsyncSession, save_model_fixture: SaveModel):

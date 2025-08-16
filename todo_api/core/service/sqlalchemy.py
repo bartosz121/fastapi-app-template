@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from typing import Any, Literal, NamedTuple, TypeVar
 
 import structlog
-from sqlalchemy import Select, asc, desc, func as sqla_func, select
+from sqlalchemy import Select, asc, desc, func as sqla_func, over, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
@@ -281,22 +281,23 @@ class SQLAlchemyService[T, U]:
         with sql_error_handler():
             stmt = self._get_statement(statement)
             stmt = self._where_from_kwargs(stmt, **kwargs)
+            stmt = self._order_by_from_kwargs(stmt, **kwargs)
+            stmt = self._paginate_from_kwargs(stmt, **kwargs)
 
-            count_stmt = select(sqla_func.count()).select_from(
-                stmt.with_only_columns(self._get_model_id_attr()).subquery()
-            )
+            stmt = stmt.add_columns(over(sqla_func.count()))
 
-            count_result = await self.session.execute(count_stmt)
-            total_count = count_result.scalar_one_or_none() or 0
+            result = await self.session.execute(stmt)
+            rows = result.all()
 
-            list_stmt = self._paginate_from_kwargs(stmt, **kwargs)
-            list_stmt = self._order_by_from_kwargs(list_stmt, **kwargs)
+            total_count = 0
+            items: list[T] = []
 
-            items_result = await self.session.execute(list_stmt)
-            items = list(items_result.scalars().all())
-
-            for item in items:
-                self._expunge(item, auto_expunge=auto_expunge)
+            for i, row in enumerate(rows):
+                instance, count_value = row
+                self._expunge(instance, auto_expunge=auto_expunge)
+                items.append(instance)
+                if i == 0:
+                    total_count = count_value
 
             return items, total_count
 

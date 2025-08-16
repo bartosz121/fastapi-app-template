@@ -56,8 +56,8 @@ async def test_response_validation_error_handler(client: httpx.AsyncClient):
     ) as client:
         response = await client.get("/items/response_validation")
 
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         data = response.json()
-        assert data["error"] == "Internal Server Error"
+        assert data["error"] == "Response Validation Error"
         assert data["code"] == "RESPONSE_VALIDATION_ERROR"
         assert data["detail"] is None

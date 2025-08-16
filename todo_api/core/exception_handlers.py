@@ -1,9 +1,14 @@
 # pyright: reportUnusedFunction=false
 
+from dataclasses import asdict
+
 import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError, ResponseValidationError
+from fastapi.exceptions import (
+    RequestValidationError as FastApiRequestValidationError,
+    ResponseValidationError as FastApiResponseValidationError,
+)
 from fastapi.responses import JSONResponse
 
 from todo_api.core import exceptions as core_exceptions
@@ -12,26 +17,20 @@ log: structlog.BoundLogger = structlog.get_logger()
 
 
 def configure(app: FastAPI) -> None:
-    @app.exception_handler(ResponseValidationError)
+    @app.exception_handler(FastApiResponseValidationError)
     async def response_validation_error(
-        request: Request, exc: ResponseValidationError
+        request: Request, exc: FastApiResponseValidationError
     ) -> JSONResponse:
         log.error(str(exc))
 
-        content: core_exceptions.JSONResponseTodoApiError = {
-            "error": "Internal Server Error",
-            "code": core_exceptions.ErrorCode.RESPONSE_VALIDATION_ERROR,
-            "detail": None,
-        }
-
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=content,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content=asdict(core_exceptions.ResponseValidationError()),
         )
 
-    @app.exception_handler(RequestValidationError)
+    @app.exception_handler(FastApiRequestValidationError)
     async def request_validation_error(
-        request: Request, exc: RequestValidationError
+        request: Request, exc: FastApiRequestValidationError
     ) -> JSONResponse:
         log.error(str(exc))
         content: core_exceptions.JSONResponseTodoApiError = {

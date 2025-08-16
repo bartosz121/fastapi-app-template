@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from fastapi import status
 from pydantic import BaseModel, Field, create_model
@@ -14,6 +15,13 @@ class ErrorCode(StrEnum):
     INVALID_USERNAME_OR_PASSWORD = "INVALID_USERNAME_OR_PASSWORD"
     USERNAME_EXISTS = "USERNAME_EXISTS"
     NOT_OWNER = "NOT_OWNER"
+
+
+@dataclass
+class ResponseValidationError:
+    error: Literal["Response Validation Error"] = "Response Validation Error"
+    code: ErrorCode = ErrorCode.RESPONSE_VALIDATION_ERROR
+    detail: None = None
 
 
 class JSONResponseTodoApiError(TypedDict):

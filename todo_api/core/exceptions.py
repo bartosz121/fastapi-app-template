@@ -4,6 +4,8 @@ from typing import TypedDict
 from fastapi import status
 from pydantic import BaseModel, Field, create_model
 
+from todo_api.utils import get_http_status_message
+
 
 class ErrorCode(StrEnum):
     REQUEST_VALIDATION_ERROR = "REQUEST_VALIDATION_ERROR"
@@ -30,16 +32,16 @@ class TodoApiError(Exception):
     def __init__(
         self,
         *,
-        error: str = "Internal Server Error",
+        status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        error: str | None = None,
         code: ErrorCode | None = None,
         detail: str | None = None,
-        status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         headers: dict[str, str] | None = None,
     ):
-        self.error = error
+        self.status_code = status_code
+        self.error = error or get_http_status_message(status_code)
         self.code = code
         self.detail = detail
-        self.status_code = status_code
         self.headers = headers
 
     def __str__(self) -> str:
@@ -76,10 +78,10 @@ class BadRequest(TodoApiError):
     def __init__(
         self,
         *,
-        error: str = "Bad Request",
+        status_code: int = status.HTTP_400_BAD_REQUEST,
+        error: str | None = None,
         code: ErrorCode | None = None,
         detail: str | None = None,
-        status_code: int = status.HTTP_400_BAD_REQUEST,
         headers: dict[str, str] | None = None,
     ):
         super().__init__(
@@ -95,10 +97,10 @@ class Unauthorized(TodoApiError):
     def __init__(
         self,
         *,
-        error: str = "Unauthorized",
+        status_code: int = status.HTTP_401_UNAUTHORIZED,
         code: ErrorCode | None = None,
         detail: str | None = None,
-        status_code: int = status.HTTP_401_UNAUTHORIZED,
+        error: str | None = None,
         headers: dict[str, str] | None = None,
     ):
         super().__init__(
@@ -114,10 +116,10 @@ class Forbidden(TodoApiError):
     def __init__(
         self,
         *,
-        error: str = "Forbidden",
+        status_code: int = status.HTTP_403_FORBIDDEN,
         code: ErrorCode | None = None,
         detail: str | None = None,
-        status_code: int = status.HTTP_403_FORBIDDEN,
+        error: str | None = None,
         headers: dict[str, str] | None = None,
     ):
         super().__init__(
@@ -133,10 +135,10 @@ class NotFound(TodoApiError):
     def __init__(
         self,
         *,
-        error: str = "Not Found",
+        status_code: int = status.HTTP_404_NOT_FOUND,
         code: ErrorCode | None = None,
         detail: str | None = None,
-        status_code: int = status.HTTP_404_NOT_FOUND,
+        error: str | None = None,
         headers: dict[str, str] | None = None,
     ):
         super().__init__(
@@ -152,10 +154,10 @@ class Conflict(TodoApiError):
     def __init__(
         self,
         *,
-        error: str = "Conflict",
+        status_code: int = status.HTTP_409_CONFLICT,
         code: ErrorCode | None = None,
         detail: str | None = None,
-        status_code: int = status.HTTP_409_CONFLICT,
+        error: str | None = None,
         headers: dict[str, str] | None = None,
     ):
         super().__init__(

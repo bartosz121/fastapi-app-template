@@ -30,3 +30,7 @@ To rename the project from `todo_api` to a custom name, use the included script.
 ```
 
 The script will rename the directory, update imports, and modify `pyproject.toml`. It is intended for one-time use.
+
+**Seed data for tests:**
+
+Use `seed_db` fixture in `tests/fixtures/database.py` to add seed data for your tests

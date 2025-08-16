@@ -27,7 +27,7 @@ async def test_request_validation_error_handler(client: httpx.AsyncClient):
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         data = response.json()
-        assert data["error"] == "Unprocessable Entity"
+        assert data["error"] == "Unprocessable Content"
         assert data["code"] == "REQUEST_VALIDATION_ERROR"
         assert "detail" in data
         assert isinstance(data["detail"], list)

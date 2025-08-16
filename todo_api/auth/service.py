@@ -1,15 +1,11 @@
 from datetime import datetime, timedelta
 
+from advanced_alchemy.repository import SQLAlchemyAsyncRepository
+from advanced_alchemy.service import SQLAlchemyAsyncRepositoryService
 from fastapi.responses import Response
 
 from todo_api.auth.models import UserSession
-from todo_api.core.config import settings
-from todo_api.core.service.sqlalchemy import SQLAlchemyService
 from todo_api.utils import utc_now
-
-
-class UserSessionService(SQLAlchemyService[UserSession, int]):
-    model = UserSession
 
 
 def get_session_token_from_header(auth_header: str | None) -> str | None:
@@ -29,17 +25,19 @@ def create_user_session_expires_at(*, ttl: timedelta) -> datetime:
 
 def set_auth_cookie(
     response: Response,
+    cookie_name: str,
     value: str,
     *,
     expires_in: int,
+    domain: str | None = None,
     secure: bool = True,
 ) -> None:
     response.set_cookie(
-        settings.AUTH_COOKIE_NAME,
+        cookie_name,  # settings.AUTH_COOKIE_NAME,
         value=value,
         expires=expires_in,
         path="/",
-        domain=settings.AUTH_COOKIE_DOMAIN,
+        domain=domain,  # settings.AUTH_COOKIE_DOMAIN,
         httponly=True,
         secure=secure,
         samesite="lax",
@@ -48,16 +46,25 @@ def set_auth_cookie(
 
 def set_logout_cookie(
     response: Response,
+    cookie_name: str,
     *,
+    domain: str | None = None,
     secure: bool = True,
 ) -> None:
     response.set_cookie(
-        settings.AUTH_COOKIE_NAME,
+        cookie_name,  # settings.AUTH_COOKIE_NAME,
         value="",
         expires=0,
         path="/",
-        domain=settings.AUTH_COOKIE_DOMAIN,
+        domain=domain,  # settings.AUTH_COOKIE_DOMAIN,
         httponly=True,
         secure=secure,
         samesite="lax",
     )
+
+
+class UserSessionService(SQLAlchemyAsyncRepositoryService[UserSession]):
+    class UserSessionRepository(SQLAlchemyAsyncRepository[UserSession]):
+        model_type = UserSession
+
+    repository_type = UserSessionRepository

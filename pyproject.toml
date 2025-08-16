@@ -19,6 +19,7 @@ dependencies = [
     "aiosqlite>=0.21.0,<0.22",
     "alembic>=1.15.2,<1.16",
     "poethepoet>=0.36.0,<0.37",
+    "advanced-alchemy[cli]>=1.4.5",
 ]
 
 

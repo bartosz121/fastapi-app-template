@@ -9,10 +9,10 @@
 - [**CLI Tool**](/todo_api/cli/__main__.py)
   - `uv run poe cli -h`
   - `add_package` command: bootstraps a new Python package with CRUD operations and tests. See source for details
-- [**Generic SQLAlchemy async service**](todo_api/core/service/sqlalchemy.py)
+- [**Advanced alchemy**](https://github.com/litestar-org/advanced-alchemy)
 - **Session-based Authentication:** Integrated with FastAPI dependency injection system
 - **User Management**
-- **Tests setup:** Includes database session management and authentication fixtures
+- **Tests setup:** Includes authentication fixtures
 - **Github Actions** runs `lint`, `typecheck` tasks and tests
 
 **Note on Timezone Handling:**
@@ -30,3 +30,13 @@ To rename the project from `todo_api` to a custom name, use the included script.
 ```
 
 The script will rename the directory, update imports, and modify `pyproject.toml`. It is intended for one-time use.
+
+**Db migrations:**
+
+```bash
+uv run alchemy --config todo_api.core.database.base.sqlalchemy_sync_config --help
+```
+
+**Seed data for tests:**
+
+Use `seed_db` fixture in `tests/fixtures/database.py` to add seed data for your tests

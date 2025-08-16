@@ -1,10 +1,13 @@
 import logging
 from enum import Enum
+from typing import Annotated
 
-from fastapi import APIRouter, Response, status
+from advanced_alchemy.filters import FilterTypes, LimitOffset
+from fastapi import APIRouter, Depends, Response, status
 
 from todo_api.auth.dependencies import CurrentUser
-from todo_api.core import exceptions, pagination, sorting
+from todo_api.core import exceptions, pagination
+from todo_api.core.database.aa_config import alchemy_async
 from todo_api.todos import dependencies, schemas
 from todo_api.todos.models import Todo
 
@@ -31,24 +34,35 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 )
 async def get_user_todo(
     pagination_params: pagination.PaginationParamsQuery,
-    order_by: sorting.TimestampOrderByParamsQuery,
     user: CurrentUser,
     todo_service: dependencies.TodoService,
+    filters: Annotated[
+        list[FilterTypes],
+        Depends(
+            alchemy_async.provide_filters(
+                {
+                    "sort_field": {"created_at", "updated_at"},
+                    "created_at": True,
+                }
+            )
+        ),
+    ],
 ):
-    total_todos = await todo_service.count(user_id=user.id)
-    todos = await todo_service.list_(
+    results, total = await todo_service.list_and_count(
+        LimitOffset(
+            offset=((pagination_params.page - 1) * pagination_params.size),
+            limit=pagination_params.size,
+        ),
+        *filters,
         user_id=user.id,
-        offset=pagination_params.offset,
-        limit=pagination_params.limit,
-        order_by=order_by,
     )
 
-    return pagination.Paginated[schemas.TodoRead].create(
-        [schemas.TodoRead.model_validate(todo) for todo in todos],
-        size=pagination_params.size,
-        page=pagination_params.page,
-        total=total_todos,
-    )
+    return {
+        "items": results,
+        "total_count": total,
+        "page": pagination_params.page,
+        "size": pagination_params.size,
+    }
 
 
 @router.get(

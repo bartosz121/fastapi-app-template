@@ -1,14 +1,9 @@
 from collections.abc import Sequence
 from math import ceil
-from typing import (
-    Annotated,
-    NamedTuple,
-    TypeVar,
-    cast,
-)
+from typing import Annotated, Any, NamedTuple, TypeVar, cast
 
 from fastapi import Depends, Query
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from todo_api.core.exceptions import BadRequest
 from todo_api.core.schemas import BaseModel
@@ -50,30 +45,20 @@ class Paginated[ModelT](BaseModel):
     items: Sequence[ModelT]
     page: Annotated[int, Field(gt=0, description="Page number")]
     size: Annotated[int, Field(gt=0, le=100, description="Page size")]
-    pages: Annotated[int, Field(gt=0, description="Number of pages")]
+    pages: Annotated[int | None, Field(gt=0, description="Number of pages")]
     total_count: Annotated[int, Field(ge=0, description="Total number of items")]
 
+    @model_validator(mode="before")
     @classmethod
-    def create(
-        cls,
-        items: Sequence[ModelT],
-        *,
-        page: int,
-        size: int,
-        total: int | None = None,
-    ) -> "Paginated[ModelT]":
-        if size < 1:
-            raise PaginationError(detail="Pagination size value must be > 0")
+    def add_pages_if_needed(cls, data: Any) -> Any:
+        """
+        Calculate `pages` if not provided so we don't have to do this in router endpoint code
+        """
 
-        total_count = total or len(items)
-        pages = ceil(total_count / size) if total_count > 0 else 1
+        if isinstance(data, dict) and "pages" not in data:
+            total_count = cast(Any, data.get("total_count"))  # pyright: ignore[reportUnknownMemberType]
+            size = cast(Any, data.get("size"))  # pyright: ignore[reportUnknownMemberType]
 
-        return cls.model_validate(
-            {
-                "items": items,
-                "page": page,
-                "size": size,
-                "pages": pages,
-                "total_count": total_count,
-            }
-        )
+            if isinstance(total_count, int) and isinstance(size, int) and size > 0:
+                data["pages"] = ceil(total_count / size) if total_count > 0 and size > 0 else 1
+        return data  # pyright: ignore[reportUnknownVariableType]

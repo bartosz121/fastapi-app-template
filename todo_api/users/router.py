@@ -80,8 +80,10 @@ async def login(
     secure = not is_localhost
     auth_service.set_auth_cookie(
         response,
+        settings.AUTH_COOKIE_NAME,
         created_session.session_token,
         expires_in=settings.USER_SESSION_TTL,
+        domain=settings.AUTH_COOKIE_DOMAIN,
         secure=secure,
     )
 
@@ -142,6 +144,8 @@ async def logout(
     secure = not is_localhost
     auth_service.set_logout_cookie(
         response,
+        settings.AUTH_COOKIE_NAME,
+        domain=settings.AUTH_COOKIE_DOMAIN,
         secure=secure,
     )
 

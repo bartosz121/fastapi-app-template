@@ -1,9 +1,13 @@
+import os
 from datetime import timedelta
 from enum import StrEnum
-from typing import Literal
+from importlib.resources import files
+from typing import Final, Literal
 
-from pydantic import SecretStr
+from pydantic import SecretStr, computed_field
 from pydantic_settings import BaseSettings
+
+BASE_DIR: Final[str] = str(files("todo_api"))
 
 
 class Environment(StrEnum):
@@ -56,6 +60,16 @@ class Settings(BaseSettings):
     # DB_PASSWORD: SecretStr
     # DB_DATABASE: str = ""
     # DB_PORT: int
+
+    @property
+    @computed_field
+    def alembic_script_config(self) -> str:
+        return os.path.join(BASE_DIR, "alembic.ini")
+
+    @property
+    @computed_field
+    def alembic_script_location(self) -> str:
+        return os.path.join(BASE_DIR, "migrations")
 
     def get_sqlite_dsn(self, *, driver: Literal["aiosqlite"] | None = None) -> str:
         if driver is None:

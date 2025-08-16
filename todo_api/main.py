@@ -19,9 +19,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 
 
 def create_app() -> FastAPI:
+    from todo_api.core.database.aa_config import alchemy_async, alchemy_sync
+
     configure_logging()
 
     app = FastAPI(lifespan=lifespan)
+
+    alchemy_async.init_app(app)
+    alchemy_sync.init_app(app)
 
     configure_middleware(app)
     configure_exception_handlers(app)

@@ -66,7 +66,7 @@ async def test_session_validation_with_cookie(
     expires_at = utc_now() + settings.get_user_session_ttl_timedelta()
     user_session = UserSession(user_id=user.id, expires_at=expires_at)
     session.add(user_session)
-    await session.commit()
+    await session.flush()
     await session.refresh(user_session)
 
     client.cookies.set(settings.AUTH_COOKIE_NAME, user_session.session_token)
@@ -90,7 +90,7 @@ async def test_session_validation_with_bearer_token(
     expires_at = utc_now() + settings.get_user_session_ttl_timedelta()
     user_session = UserSession(user_id=user.id, expires_at=expires_at)
     session.add(user_session)
-    await session.commit()
+    await session.flush()
     await session.refresh(user_session)
 
     response = await client.get(
@@ -115,7 +115,7 @@ async def test_expired_session_is_invalid(
     expired_at = utc_now() - timedelta(seconds=1)
     user_session = UserSession(user_id=user.id, expires_at=expired_at)
     session.add(user_session)
-    await session.commit()
+    await session.flush()
     await session.refresh(user_session)
 
     client.cookies.set(settings.AUTH_COOKIE_NAME, user_session.session_token)
@@ -159,7 +159,7 @@ async def test_logout_deletes_session(
             select(UserSession).where(UserSession.session_token == session_token)
         )
     ).scalar_one_or_none()
-    await session.commit()
+    await session.flush()
     await session.flush()
     assert deleted_session is None
 

@@ -253,7 +253,7 @@ class SQLAlchemyService[T, U]:
                 self._expunge(instance, auto_expunge=auto_expunge)
             return instance
 
-    async def list_(
+    async def list(
         self,
         statement: Select[tuple[T]] | None = None,
         auto_expunge: bool | None = None,

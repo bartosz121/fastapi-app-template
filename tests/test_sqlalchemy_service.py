@@ -128,7 +128,7 @@ async def test_list(session: AsyncSession, save_model_fixture: SaveModel):
 
     service = TaskService(session)
 
-    result = await service.list_()
+    result = await service.list()
 
     assert len(result) == 3
     assert all(isinstance(item, Task) for item in result)
@@ -145,7 +145,7 @@ async def test_list_with_filtering(session: AsyncSession, save_model_fixture: Sa
 
     service = TaskService(session)
 
-    result = await service.list_(priority=1)
+    result = await service.list(priority=1)
 
     assert len(result) == 2
     assert all(task.priority == 1 for task in result)
@@ -158,7 +158,7 @@ async def test_list_with_pagination(session: AsyncSession, save_model_fixture: S
 
     service = TaskService(session)
 
-    result = await service.list_(limit=2, offset=2)
+    result = await service.list(limit=2, offset=2)
 
     assert len(result) == 2
 
@@ -174,8 +174,8 @@ async def test_list_with_ordering(session: AsyncSession, save_model_fixture: Sav
 
     service = TaskService(session)
 
-    result_asc = await service.list_(order_by=OrderBy(field="priority", order="asc"))
-    result_desc = await service.list_(order_by=OrderBy(field="priority", order="desc"))
+    result_asc = await service.list(order_by=OrderBy(field="priority", order="asc"))
+    result_desc = await service.list(order_by=OrderBy(field="priority", order="desc"))
 
     assert result_asc[0].priority == 1
     assert result_asc[-1].priority == 3
@@ -297,7 +297,7 @@ async def test_order_by_invalid_field(session: AsyncSession, save_model_fixture:
 
     service = TaskService(session)
 
-    result = await service.list_(order_by=OrderBy(field="non_existent", order="asc"))
+    result = await service.list(order_by=OrderBy(field="non_existent", order="asc"))
 
     assert len(result) == 2
 
@@ -489,7 +489,7 @@ async def test_order_by_invalid_order(session: AsyncSession):
 
     invalid_order_by = OrderBy(field="doesnt_exist", order="invalid")  # type: ignore
 
-    await service.list_(order_by=invalid_order_by)
+    await service.list(order_by=invalid_order_by)
 
 
 async def test_list_with_multiple_filters(session: AsyncSession, save_model_fixture: SaveModel):
@@ -503,7 +503,7 @@ async def test_list_with_multiple_filters(session: AsyncSession, save_model_fixt
         await save_model_fixture(task)
 
     service = TaskService(session)
-    result = await service.list_(title="Common Title", priority=1)
+    result = await service.list(title="Common Title", priority=1)
 
     assert len(result) == 1
     assert result[0].description == "Desc 1"
@@ -525,7 +525,7 @@ async def test_list_with_empty_result(session: AsyncSession):
     """Test list when no items match the criteria."""
     service = TaskService(session)
 
-    result = await service.list_(title="Non-existent Title")
+    result = await service.list(title="Non-existent Title")
 
     assert result == []
 

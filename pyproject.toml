@@ -46,9 +46,15 @@ build-backend = "hatchling.build"
 line-length = 99
 
 [tool.ruff.lint]
-extend-select = ["Q", "RUF100", "C90", "UP", "I", "T20"]
+extend-select = ["Q", "RUF100", "C90", "UP", "I", "T20", "FAST", "ANN", "ASYNC"]
 isort = { combine-as-imports = true }
 mccabe = { max-complexity = 15 }
+
+[tool.ruff.lint.per-file-ignores]
+# `Missing return type annotation for public function`
+# I prefer `response_model` over endpoint function return type hint
+"**/router.py" = ["ANN201"]
+"tests/**" = ["ANN201", "ANN202"]
 
 [tool.pyright]
 pythonVersion = "3.14"

@@ -1,6 +1,6 @@
 ARG ENVIRONMENT=DEVELOPMENT
 
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -26,7 +26,7 @@ RUN if [ "${ENVIRONMENT}" = "PRODUCTION" ]; then \
     fi
 
 
-FROM python:3.13-slim-bookworm AS final
+FROM python:3.14-slim-bookworm AS final
 
 COPY --from=builder --chown=app:app /app /app
 

@@ -4,14 +4,15 @@ https://www.structlog.org/en/stable/standard-library.html#rendering-using-struct
 
 import logging
 import logging.config
-from typing import Any
 
 import structlog
 
 from todo_api.core.config import Environment, settings
 
 
-def _get_renderer(environment: Environment) -> Any:
+def _get_renderer(
+    environment: Environment,
+) -> structlog.processors.JSONRenderer | structlog.dev.ConsoleRenderer:
     if environment.is_production:
         return structlog.processors.JSONRenderer()
     return structlog.dev.ConsoleRenderer(colors=True)
@@ -70,7 +71,7 @@ def _configure_std_logging() -> None:
     )
 
 
-def _configure_structlog():
+def _configure_structlog() -> None:
     structlog.configure_once(
         processors=[
             structlog.contextvars.merge_contextvars,
@@ -89,7 +90,7 @@ def _configure_structlog():
     )
 
 
-def configure():
+def configure() -> None:
     _configure_std_logging()
     _configure_structlog()
 

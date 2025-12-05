@@ -56,7 +56,7 @@ class Paginated[ModelT](BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def add_pages_if_needed(cls, data: Any) -> Any:
+    def add_pages_if_needed(cls, data: Any) -> Any:  # noqa: ANN401
         """
         Calculate `pages` if not provided so we don't have to do this in router endpoint code
         """

@@ -60,8 +60,10 @@ SaveModel = Callable[[Model], Coroutine[Any, Any, None]]
 
 @pytest_asyncio.fixture
 async def save_model_fixture(session: AsyncSession) -> SaveModel:
-    def _save_model_fixture_factory(session: AsyncSession):
-        async def _save_model_fixture(model: Model):
+    def _save_model_fixture_factory(
+        session: AsyncSession,
+    ) -> Callable[[Model], Coroutine[None, None, None]]:
+        async def _save_model_fixture(model: Model) -> None:
             session.add(model)
             await session.commit()
 

@@ -50,7 +50,7 @@ async def get_user_from_session(
 class Authenticator:
     allow_anonymous: bool
 
-    def __init__(self, allow_anonymous: bool = False):
+    def __init__(self, allow_anonymous: bool = False) -> None:
         self.allow_anonymous = allow_anonymous
 
     async def __call__(

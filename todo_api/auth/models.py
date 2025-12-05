@@ -23,7 +23,7 @@ class UserSession(Model, TimestampMixin):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="cascade"))
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), index=True)
 
-    user: Mapped["User"] = relationship(lazy="joined")
+    user: Mapped[User] = relationship(lazy="joined")
 
 
 __all__ = ("UserSession",)

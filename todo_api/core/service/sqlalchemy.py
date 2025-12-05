@@ -1,4 +1,6 @@
-from collections.abc import Iterable, Sequence
+# ruff: noqa: ANN401
+
+from collections.abc import Generator, Iterable, Sequence
 from contextlib import contextmanager
 from typing import Any, Literal, NamedTuple, TypeVar
 
@@ -22,7 +24,7 @@ class OrderBy(NamedTuple):
 
 
 @contextmanager
-def sql_error_handler():
+def sql_error_handler() -> Generator[None]:
     try:
         yield
     except IntegrityError as exc:

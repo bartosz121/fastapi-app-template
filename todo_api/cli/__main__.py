@@ -8,7 +8,7 @@ from poethepoet.app import PoeThePoet  # pyright: ignore[reportMissingTypeStubs]
 log: structlog.BoundLogger = structlog.get_logger()
 
 
-def add_package(args: argparse.Namespace):
+def add_package(args: argparse.Namespace) -> None:
     """Creates a new package with the given name."""
     package_name = args.name
 
@@ -84,7 +84,7 @@ def add_package(args: argparse.Namespace):
     log.info("Ruff format complete.")
 
 
-def main():
+def main() -> None:
     """Main function to run the CLI."""
     parser = argparse.ArgumentParser(prog="poe cli", description="CLI for todo_api")
     subparsers = parser.add_subparsers()

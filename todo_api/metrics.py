@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get("/metrics", include_in_schema=False)
-def handle_metrics(request: Request):
+def handle_metrics(request: Request) -> Response:
     headers = {"Content-Type": CONTENT_TYPE_LATEST}
     registry = REGISTRY
 

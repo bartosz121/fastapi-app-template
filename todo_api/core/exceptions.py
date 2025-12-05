@@ -45,7 +45,7 @@ class TodoApiError(Exception):
         code: ErrorCode | None = None,
         detail: str | None = None,
         headers: dict[str, str] | None = None,
-    ):
+    ) -> None:
         self.status_code = status_code
         self.error = error or get_http_status_message(status_code)
         self.code = code
@@ -91,7 +91,7 @@ class BadRequest(TodoApiError):
         code: ErrorCode | None = None,
         detail: str | None = None,
         headers: dict[str, str] | None = None,
-    ):
+    ) -> None:
         super().__init__(
             error=error,
             code=code,
@@ -110,7 +110,7 @@ class Unauthorized(TodoApiError):
         detail: str | None = None,
         error: str | None = None,
         headers: dict[str, str] | None = None,
-    ):
+    ) -> None:
         super().__init__(
             error=error,
             code=code,
@@ -129,7 +129,7 @@ class Forbidden(TodoApiError):
         detail: str | None = None,
         error: str | None = None,
         headers: dict[str, str] | None = None,
-    ):
+    ) -> None:
         super().__init__(
             error=error,
             code=code,
@@ -148,7 +148,7 @@ class NotFound(TodoApiError):
         detail: str | None = None,
         error: str | None = None,
         headers: dict[str, str] | None = None,
-    ):
+    ) -> None:
         super().__init__(
             error=error,
             code=code,
@@ -167,7 +167,7 @@ class Conflict(TodoApiError):
         detail: str | None = None,
         error: str | None = None,
         headers: dict[str, str] | None = None,
-    ):
+    ) -> None:
         super().__init__(
             error=error,
             code=code,

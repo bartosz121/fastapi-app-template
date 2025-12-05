@@ -36,7 +36,7 @@ REQUESTS_IN_PROGRESS = Gauge(
 
 
 class PrometheusMiddleware:
-    def __init__(self, app: ASGIApp):
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
     @staticmethod

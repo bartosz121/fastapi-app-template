@@ -91,7 +91,7 @@ class SQLAlchemyService[T, U]:
         instance: T,
         attribute_names: Iterable[str] | None = None,
         *,
-        auto_refresh: bool | None,
+        auto_refresh: bool | None = None,
         with_for_update: bool | None = None,
     ) -> None:
         auto_refresh_ = self.auto_refresh if auto_refresh is None else auto_refresh

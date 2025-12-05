@@ -280,11 +280,11 @@ async def test_sql_error_handling_sqlalchemy_error(session: AsyncSession):
 
 
 async def test_sql_error_handling_attribute_error(session: AsyncSession):
+    """Test that AttributeError is not caught by sql_error_handler (programming errors should propagate)."""
     service = TaskService(session)
 
-    # Mock _get_model_id_attr to raise AttributeError
     with patch.object(service, "_get_model_id_attr", side_effect=AttributeError("mock error")):
-        with pytest.raises(ServiceError):
+        with pytest.raises(AttributeError):
             await service.count(id=1)
 
 
@@ -463,8 +463,7 @@ async def test_update_conflict_error(session: AsyncSession, test_task: Task):
     service = TaskService(session)
 
     with patch.object(session, "merge", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore
-        # The update method catches IntegrityError and wraps it in ServiceError
-        with pytest.raises(ServiceError):
+        with pytest.raises(Conflict):
             await service.update(test_task)
 
 
@@ -556,3 +555,34 @@ async def test_list_and_count_empty_result(session: AsyncSession):
 
     assert items == []
     assert count == 0
+
+
+async def test_list_and_count_pagination_correctness(
+    session: AsyncSession, save_model_fixture: SaveModel
+):
+    tasks = [Task(title=f"Task {i}") for i in range(10)]
+    for task in tasks:
+        await save_model_fixture(task)
+    service = TaskService(session)
+    items, total = await service.list_and_count(limit=3, offset=3)
+    assert len(items) == 3
+    assert total == 10
+
+
+async def test_list_and_count_with_filter_and_order(
+    session: AsyncSession, save_model_fixture: SaveModel
+):
+    tasks = [
+        Task(title="Task A", priority=2),
+        Task(title="Task B", priority=1),
+        Task(title="Task C", priority=3),
+    ]
+    for task in tasks:
+        await save_model_fixture(task)
+    service = TaskService(session)
+    items, total = await service.list_and_count(
+        priority=2, order_by=OrderBy(field="title", order="asc"), limit=1
+    )
+    assert len(items) == 1
+    assert total == 1
+    assert items[0].title == "Task A"

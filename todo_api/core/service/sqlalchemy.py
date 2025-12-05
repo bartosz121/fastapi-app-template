@@ -33,9 +33,6 @@ def sql_error_handler() -> Generator[None]:
     except SQLAlchemyError as exc:
         logger.error(f"Database error during operation: {exc}", exc_info=True)
         raise ServiceError() from exc
-    except AttributeError as exc:
-        logger.error(f"Attribute error during service operation: {exc}", exc_info=True)
-        raise ServiceError() from exc
 
 
 T = TypeVar("T")
@@ -142,7 +139,13 @@ class SQLAlchemyService[T, U]:
     def _order_by_from_kwargs(
         self, statement: Select[tuple[T]], **kwargs: Any
     ) -> Select[tuple[T]]:
-        order_by: OrderBy | None = kwargs.get("order_by")
+        if "order_by" not in kwargs:
+            return statement
+
+        order_by = kwargs["order_by"]
+        if order_by is None:
+            return statement
+
         if isinstance(order_by, OrderBy):
             if hasattr(self.model, order_by.field):
                 order_func = asc if order_by.order == "asc" else desc
@@ -152,7 +155,7 @@ class SQLAlchemyService[T, U]:
                     f"Attempted to order by non-existent attribute '{order_by.field}' on model {self.model.__name__}"
                 )
         else:
-            logger.warning(f"Invalid order_by type: {type(order_by)}. Expected OrderBy.")
+            logger.warning(f"Invalid order_by type: {type(order_by)}. Expected OrderBy or None.")
 
         return statement
 
@@ -315,12 +318,7 @@ class SQLAlchemyService[T, U]:
     ) -> T:
         with sql_error_handler():
             if data not in self.session:
-                try:
-                    instance = await self.session.merge(data)
-                except Exception as exc:
-                    logger.error(f"Failed to merge instance for update: {exc}", exc_info=True)
-                    raise ServiceError() from exc
-
+                instance = await self.session.merge(data)
             else:
                 instance = data
 

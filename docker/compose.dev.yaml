@@ -2,7 +2,26 @@ services:
   api:
     environment:
       - PROMETHEUS_MULTIPROC_DIR=
-    command: uvicorn --factory todo_api.main:create_app --host 0.0.0.0 --port 8000 --reload
+    command:
+      [
+        "granian",
+        "--loop",
+        "uvloop",
+        "--interface",
+        "asgi",
+        "--log-level",
+        "debug",
+        "--access-log",
+        "--workers",
+        "1",
+        "--factory",
+        "todo_api.main:create_app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
     develop:
       watch:
         - path: ../uv.lock

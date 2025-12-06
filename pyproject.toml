@@ -16,6 +16,7 @@ dependencies = [
     "aiosqlite>=0.21.0,<0.22",
     "alembic>=1.17.2,<1.18",
     "poethepoet>=0.38.0,<0.39",
+    "granian[reload,uvloop]>=2.6.0,<3",
 ]
 
 

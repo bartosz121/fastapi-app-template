@@ -36,4 +36,4 @@ RUN mkdir /tmp/prometheus
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["uvicorn", "--workers", "4", "--factory", "todo_api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["granian", "--loop", "uvloop", "--interface", "asgi", "--log-level", "info", "--access-log",  "--workers", "1", "--factory", "todo_api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]

@@ -13,4 +13,22 @@ services:
       - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
     ports:
       - 8000:8000
-    command: uvicorn --workers 4 --factory todo_api.main:create_app --host 0.0.0.0 --port 8000
+    command:
+      [
+        "granian",
+        "--loop",
+        "uvloop",
+        "--interface",
+        "asgi",
+        "--log-level",
+        "info",
+        "--access-log",
+        "--workers",
+        "1",
+        "--factory",
+        "todo_api.main:create_app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+      ]

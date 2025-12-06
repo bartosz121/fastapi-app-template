@@ -25,7 +25,7 @@ async def test_request_validation_error_handler(client: httpx.AsyncClient):
     ) as client:
         response = await client.post("/items/request_validation", json={"name": "Test"})
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
         data = response.json()
         assert data["error"] == "Unprocessable Entity"
         assert data["code"] == "REQUEST_VALIDATION_ERROR"
@@ -56,7 +56,7 @@ async def test_response_validation_error_handler(client: httpx.AsyncClient):
     ) as client:
         response = await client.get("/items/response_validation")
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
         data = response.json()
         assert data["error"] == "Response Validation Error"
         assert data["code"] == "RESPONSE_VALIDATION_ERROR"

@@ -24,7 +24,7 @@ def configure(app: FastAPI) -> None:
         log.error(str(exc))
 
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=asdict(core_exceptions.ResponseValidationError()),
         )
 
@@ -40,7 +40,7 @@ def configure(app: FastAPI) -> None:
         }
 
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=content,
         )
 

@@ -1,6 +1,6 @@
 [project]
 name = "todo-api"
-version = "0.1.0"
+dynamic = ["version"]
 requires-python = ">=3.14"
 description = ""
 authors = [{ name = "bartosz121", email = "bmagiera121@gmail.com" }]
@@ -41,8 +41,18 @@ dev = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+fallback_version = "0.0.0"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "todo_api/_version.py"
 
 [tool.ruff]
 line-length = 99
@@ -63,6 +73,7 @@ pythonVersion = "3.14"
 typeCheckingMode = "strict"
 reportUnnecessaryTypeIgnoreComment = true
 venvPath = ".venv"
+exclude = ["todo_api/version.py", ".venv"]
 
 [tool.coverage.report]
 exclude_lines = [

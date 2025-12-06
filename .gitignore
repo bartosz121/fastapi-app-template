@@ -162,3 +162,6 @@ static/*
 .ruff_cache
 __pycache__
 .env.*
+
+# hatch-vcs version file
+todo_api/_version.py

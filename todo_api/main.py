@@ -28,10 +28,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 def create_app() -> FastAPI:
     from todo_api.core.config import settings
     from todo_api.core.exceptions import ResponseValidationError
+    from todo_api.version import __version__
 
     configure_logging(settings.LOG_LEVEL, settings.ENVIRONMENT, settings.ENABLED_LOGGERS)
 
     app = FastAPI(
+        version=__version__,
         lifespan=lifespan,
         # Override default validation error schema
         responses={

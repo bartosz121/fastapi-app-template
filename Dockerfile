@@ -2,6 +2,10 @@ ARG ENVIRONMENT=DEVELOPMENT
 
 FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_NO_CACHE=1 \
@@ -19,6 +23,12 @@ RUN --mount=type=bind,source=uv.lock,target=uv.lock \
 
 ADD . /app
 
+# `docker` and `.vscode` are in `.dockerignore`
+# mark all tracked files inside docker/ and .vscode/ as unchanged
+# without this, git will see the missing tracked files and mark the repository as dirty
+# as a result, hatch-vcs/setuptools-scm would append a dirty tag (e.g., .postN.dev0) to the version
+RUN git ls-files docker .vscode | xargs git update-index --assume-unchanged
+
 RUN if [ "${ENVIRONMENT}" = "PRODUCTION" ]; then \
     uv sync --frozen --no-dev; \
     else \
@@ -27,6 +37,10 @@ RUN if [ "${ENVIRONMENT}" = "PRODUCTION" ]; then \
 
 
 FROM python:3.14-slim-bookworm AS final
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder --chown=app:app /app /app
 

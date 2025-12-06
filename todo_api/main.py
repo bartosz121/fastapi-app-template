@@ -19,9 +19,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 
 
 def create_app() -> FastAPI:
+    from todo_api.core.config import settings
     from todo_api.core.exceptions import ResponseValidationError
 
-    configure_logging()
+    configure_logging(settings.ENABLED_LOGGERS)
 
     app = FastAPI(
         lifespan=lifespan,

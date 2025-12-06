@@ -18,7 +18,7 @@ def _get_renderer(
     return structlog.dev.ConsoleRenderer(colors=True)
 
 
-def _configure_std_logging() -> None:
+def _configure_std_logging(enabled_loggers: list[str]) -> None:
     logging.config.dictConfig(
         {
             "version": 1,
@@ -61,10 +61,7 @@ def _configure_std_logging() -> None:
                         "handlers": [],
                         "propagate": True,
                     }
-                    for logger in [
-                        "uvicorn",
-                        "sqlalchemy",
-                    ]
+                    for logger in enabled_loggers
                 },
             },
         }
@@ -90,8 +87,8 @@ def _configure_structlog() -> None:
     )
 
 
-def configure() -> None:
-    _configure_std_logging()
+def configure(enabled_loggers: list[str]) -> None:
+    _configure_std_logging(enabled_loggers)
     _configure_structlog()
 
 

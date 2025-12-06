@@ -40,6 +40,7 @@ class Environment(StrEnum):
 class Settings(BaseSettings):
     ENVIRONMENT: Environment = Environment.DEVELOPMENT
     LOG_LEVEL: str = "DEBUG"
+    ENABLED_LOGGERS: list[str] = ["granian", "sqlalchemy", "aiosqlite"]
 
     SECRET: SecretStr = SecretStr("Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4")
     USER_SESSION_TTL: int = 24 * 31  # hours

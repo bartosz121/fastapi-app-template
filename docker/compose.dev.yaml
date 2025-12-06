@@ -1,7 +1,5 @@
 services:
   api:
-    environment:
-      - PROMETHEUS_MULTIPROC_DIR=
     command:
       [
         "granian",

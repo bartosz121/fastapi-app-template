@@ -4,10 +4,12 @@ https://www.structlog.org/en/stable/standard-library.html#rendering-using-struct
 
 import logging
 import logging.config
+from typing import TYPE_CHECKING
 
 import structlog
 
-from todo_api.core.config import Environment, settings
+if TYPE_CHECKING:
+    from todo_api.core.config import Environment
 
 
 def _get_renderer(
@@ -18,7 +20,11 @@ def _get_renderer(
     return structlog.dev.ConsoleRenderer(colors=True)
 
 
-def _configure_std_logging(enabled_loggers: list[str]) -> None:
+def _configure_std_logging(
+    log_level: str,
+    environment: Environment,
+    enabled_loggers: list[str],
+) -> None:
     logging.config.dictConfig(
         {
             "version": 1,
@@ -28,7 +34,7 @@ def _configure_std_logging(enabled_loggers: list[str]) -> None:
                     "()": structlog.stdlib.ProcessorFormatter,
                     "processors": [
                         structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                        _get_renderer(settings.ENVIRONMENT),
+                        _get_renderer(environment),
                     ],
                     "foreign_pre_chain": [
                         structlog.contextvars.merge_contextvars,
@@ -45,7 +51,7 @@ def _configure_std_logging(enabled_loggers: list[str]) -> None:
             },
             "handlers": {
                 "default": {
-                    "level": settings.LOG_LEVEL,
+                    "level": log_level,
                     "class": "logging.StreamHandler",
                     "formatter": "todo_api",
                 },
@@ -53,7 +59,7 @@ def _configure_std_logging(enabled_loggers: list[str]) -> None:
             "loggers": {
                 "": {
                     "handlers": ["default"],
-                    "level": settings.LOG_LEVEL,
+                    "level": log_level,
                     "propagate": False,
                 },
                 **{
@@ -87,8 +93,12 @@ def _configure_structlog() -> None:
     )
 
 
-def configure(enabled_loggers: list[str]) -> None:
-    _configure_std_logging(enabled_loggers)
+def configure(
+    log_level: str,
+    environment: Environment,
+    enabled_loggers: list[str],
+) -> None:
+    _configure_std_logging(log_level, environment, enabled_loggers)
     _configure_structlog()
 
 

@@ -6,17 +6,32 @@ from fastapi import Depends, Request
 
 from todo_api.auth import service as auth_service
 from todo_api.auth.service import UserSessionService as UserSessionService_
-from todo_api.core.config import settings
 from todo_api.core.database.dependencies import AsyncDbSession
 from todo_api.core.exceptions import Unauthorized
 from todo_api.users.models import User
 from todo_api.utils import utc_now
 
 
+def get_auth_cookie_name(request: Request) -> str:
+    """
+    Get `auth_cookie_name` value from lifespan state
+    """
+    return request.state.auth_cookie_name  # main.State.auth_cookie_name
+
+
+def get_auth_cookie_domain(request: Request) -> str:
+    """
+    Get `auth_cookie_domain` value from lifespan state
+    """
+    return request.state.auth_cookie_domain  # main.State.auth_cookie_domain
+
+
 def get_user_session_service(session: AsyncDbSession) -> UserSessionService_:
     return UserSessionService_(session)
 
 
+AuthCookieName = Annotated[str, Depends(get_auth_cookie_name)]
+AuthCookieDomain = Annotated[str, Depends(get_auth_cookie_domain)]
 UserSessionService = Annotated[UserSessionService_, Depends(get_user_session_service)]
 
 
@@ -26,10 +41,11 @@ class AnonymousUser:
 
 async def get_user_from_session(
     request: Request,
+    auth_cookie_name: AuthCookieName,
     user_session_service: UserSessionService,
 ) -> User | AnonymousUser:
     session_token = request.cookies.get(
-        settings.AUTH_COOKIE_NAME
+        auth_cookie_name
     ) or auth_service.get_session_token_from_header(request.headers.get("Authorization", None))
 
     if session_token:

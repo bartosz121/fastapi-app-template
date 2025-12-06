@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from fastapi.responses import Response
 
 from todo_api.auth.models import UserSession
-from todo_api.core.config import settings
 from todo_api.core.service.sqlalchemy import SQLAlchemyService
 from todo_api.utils import utc_now
 
@@ -31,15 +30,17 @@ def set_auth_cookie(
     response: Response,
     value: str,
     *,
+    auth_cookie_name: str,
+    auth_cookie_domain: str,
     expires_in: int,
     secure: bool = True,
 ) -> None:
     response.set_cookie(
-        settings.AUTH_COOKIE_NAME,
+        auth_cookie_name,
         value=value,
         expires=expires_in,
         path="/",
-        domain=settings.AUTH_COOKIE_DOMAIN,
+        domain=auth_cookie_domain,
         httponly=True,
         secure=secure,
         samesite="lax",
@@ -49,14 +50,16 @@ def set_auth_cookie(
 def set_logout_cookie(
     response: Response,
     *,
+    auth_cookie_name: str,
+    auth_cookie_domain: str,
     secure: bool = True,
 ) -> None:
     response.set_cookie(
-        settings.AUTH_COOKIE_NAME,
+        auth_cookie_name,
         value="",
         expires=0,
         path="/",
-        domain=settings.AUTH_COOKIE_DOMAIN,
+        domain=auth_cookie_domain,
         httponly=True,
         secure=secure,
         samesite="lax",

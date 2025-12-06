@@ -5,6 +5,8 @@ from fastapi.responses import Response
 from todo_api.auth import service as auth_service
 from todo_api.auth.dependencies import (
     AnonymousUser,
+    AuthCookieDomain,
+    AuthCookieName,
     CurrentUser,
     CurrentUserOrAnonymous,
     UserSessionService,
@@ -50,6 +52,8 @@ async def login(
     request: Request,
     response: Response,
     data: schemas.UserCreate,
+    auth_cookie_name: AuthCookieName,
+    auth_cookie_domain: AuthCookieDomain,
     user_auth: CurrentUserOrAnonymous,
     user_service: dependencies.UserService,
     user_session_service: UserSessionService,
@@ -81,6 +85,8 @@ async def login(
     auth_service.set_auth_cookie(
         response,
         created_session.session_token,
+        auth_cookie_name=auth_cookie_name,
+        auth_cookie_domain=auth_cookie_domain,
         expires_in=settings.USER_SESSION_TTL,
         secure=secure,
     )
@@ -130,9 +136,11 @@ async def register(
 async def logout(
     request: Request,
     response: Response,
+    auth_cookie_name: AuthCookieName,
+    auth_cookie_domain: AuthCookieDomain,
     user_session_service: UserSessionService,
 ):
-    session_token = request.cookies.get(settings.AUTH_COOKIE_NAME)
+    session_token = request.cookies.get(auth_cookie_name)
     if session_token:
         user_session = await user_session_service.get_one_or_none(session_token=session_token)
         if user_session:
@@ -142,6 +150,8 @@ async def logout(
     secure = not is_localhost
     auth_service.set_logout_cookie(
         response,
+        auth_cookie_name=auth_cookie_name,
+        auth_cookie_domain=auth_cookie_domain,
         secure=secure,
     )
 

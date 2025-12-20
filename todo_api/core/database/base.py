@@ -1,3 +1,6 @@
+from opentelemetry.instrumentation.sqlalchemy import (  # pyright: ignore[reportMissingTypeStubs]
+    SQLAlchemyInstrumentor,
+)
 from sqlalchemy import Engine, MetaData, create_engine as _create_engine
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -62,6 +65,7 @@ async_engine = create_async_engine(
     dsn=settings.get_sqlite_dsn(driver="aiosqlite"), debug=settings.ENVIRONMENT.is_qa
 )
 
+SQLAlchemyInstrumentor().instrument(engines=[engine, async_engine.sync_engine])
 
 SyncSessionMaker = sessionmaker(engine, expire_on_commit=False)
 AsyncSessionMaker = async_sessionmaker(async_engine, expire_on_commit=False)

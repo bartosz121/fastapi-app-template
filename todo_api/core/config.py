@@ -38,10 +38,14 @@ class Environment(StrEnum):
 
 
 class Settings(BaseSettings):
+    APP_NAME: str = "todo-api"
     ENVIRONMENT: Environment = Environment.DEVELOPMENT
     LOG_LEVEL: str = "DEBUG"
-    ENABLED_LOGGERS: list[str] = ["granian", "sqlalchemy", "aiosqlite"]
+    ENABLED_LOGGERS: list[str] = ["granian", "sqlalchemy", "opentelemetry"]
 
+    OTEL_ENABLED: bool = True
+    OTLP_GRPC_ENDPOINT: str = "127.0.0.1:4317"
+    OTLP_EXPORTER_INSECURE: bool = True
     SECRET: SecretStr = SecretStr("Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4")
     USER_SESSION_TTL: int = 24 * 31  # hours
     AUTH_COOKIE_NAME: str = "todo_auth"

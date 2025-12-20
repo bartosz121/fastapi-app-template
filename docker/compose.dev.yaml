@@ -1,37 +1,58 @@
 services:
-  api:
+  todo-api:
     command:
-      [
-        "granian",
-        "--loop",
-        "uvloop",
-        "--interface",
-        "asgi",
-        "--log-level",
-        "debug",
-        "--access-log",
-        "--workers",
-        "1",
-        "--factory",
-        "todo_api.main:create_app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-        "--reload",
-      ]
+      - granian
+      - --loop
+      - uvloop
+      - --interface
+      - asgi
+      - --log-level
+      - debug
+      - --access-log
+      - --workers
+      - "1"
+      - --factory
+      - todo_api.main:create_app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --reload
+      - --reload-ignore-patterns
+      - ".*\\.db"
+    environment:
+      ENVIRONMENT: DEVELOPMENT
+      LOG_LEVEL: DEBUG
+      OTLP_GRPC_ENDPOINT: jaeger:4317
+    depends_on:
+      - jaeger
     develop:
       watch:
-        - path: ../uv.lock
-          action: rebuild
-        - path: ../pyproject.toml
-          action: rebuild
-        - path: ../
+        - action: rebuild
+          path: ../uv.lock
+        - action: rebuild
+          path: ../pyproject.toml
+        - action: sync
+          path: ..
           target: /app
-          action: sync
           ignore:
-            - .venv/
-            - .ruff_cache/
-            - .pytest_cache/
-            - .vscode/
-            - .docker/
+            - .venv
+            - .git
+            - __pycache__
+            - .pytest_cache
+            - .mypy_cache
+            - .ruff_cache
+            - database.db
+
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.11.0
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+      - "5778:5778"
+      - "9411:9411"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    restart: unless-stopped

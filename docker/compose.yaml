@@ -1,34 +1,57 @@
 services:
-  api:
+  todo-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
     image: todo-api:latest
     container_name: todo-api
-    build:
-      context: ../
-      dockerfile: Dockerfile
-    environment:
-      - DB_URL=sqlite+aiosqlite:///database.db
-      - SECRET=Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4
-      - AUTH_COOKIE_NAME=todo_auth
-      - AUTH_COOKIE_DOMAIN=127.0.0.1
-      - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
-    ports:
-      - 8000:8000
     command:
-      [
-        "granian",
-        "--loop",
-        "uvloop",
-        "--interface",
-        "asgi",
-        "--log-level",
-        "info",
-        "--access-log",
-        "--workers",
-        "1",
-        "--factory",
-        "todo_api.main:create_app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-      ]
+      - granian
+      - --loop
+      - uvloop
+      - --interface
+      - asgi
+      - --log-level
+      - info
+      - --access-log
+      - --workers
+      - "1"
+      - --factory
+      - todo_api.main:create_app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: PRODUCTION
+      LOG_LEVEL: INFO
+      ENABLED_LOGGERS: '["granian","sqlalchemy","opentelemetry"]'
+      APP_NAME: todo-api
+      OTEL_ENABLED: "true"
+      OTLP_GRPC_ENDPOINT: "localhost:4317"
+      OTLP_EXPORTER_INSECURE: "true"
+      SECRET: "secret"
+      USER_SESSION_TTL: "744"
+      AUTH_COOKIE_NAME: todo_auth
+      AUTH_COOKIE_DOMAIN: localhost
+      JWT_EXPIRATION: "259200"
+      PROMETHEUS_MULTIPROC_DIR: /tmp/prometheus
+      DB_SCHEME: "sqlite:///database.db"
+    volumes:
+      - ../database.db:/app/database.db
+      - /tmp/prometheus:/tmp/prometheus
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

@@ -50,4 +50,7 @@ RUN mkdir /tmp/prometheus
 
 ENV PATH="/app/.venv/bin:$PATH"
 
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=10s \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+
 CMD ["granian", "--loop", "uvloop", "--interface", "asgi", "--log-level", "info", "--access-log",  "--workers", "1", "--factory", "todo_api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]

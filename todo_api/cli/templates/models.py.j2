@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column
 
-from todo_api.core.database.base import Model
-from todo_api.core.database.mixins import TimestampMixin
+from {{ root_package }}.core.database.base import Model
+from {{ root_package }}.core.database.mixins import TimestampMixin
 
 
 class {{ package_name | capitalize }}(TimestampMixin, Model):

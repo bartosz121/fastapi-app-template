@@ -1,8 +1,8 @@
 from fastapi import APIRouter, status
 
-from todo_api.core import exceptions
-from todo_api.{{ package_name }} import dependencies, schemas
-from todo_api.{{ package_name }}.models import {{ package_name | capitalize }}
+from {{ root_package }}.core import exceptions
+from {{ root_package }}.{{ package_name }} import dependencies, schemas
+from {{ root_package }}.{{ package_name }}.models import {{ package_name | capitalize }}
 
 router = APIRouter(prefix="/{{ package_name }}s", tags=["{{ package_name }}s"])
 

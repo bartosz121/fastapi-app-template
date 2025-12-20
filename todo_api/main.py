@@ -4,7 +4,6 @@ from typing import TypedDict, cast
 
 from fastapi import FastAPI
 
-import todo_api.instrumentation  # pyright: ignore[reportUnusedImport] # noqa: F401
 from todo_api.api import router_v1
 from todo_api.core.config import settings
 from todo_api.core.exception_handlers import configure as configure_exception_handlers
@@ -50,12 +49,16 @@ def create_app() -> FastAPI:
 
     from todo_api.core.config import settings
     from todo_api.core.exceptions import ResponseValidationError
+    from todo_api.opentelemetry.sqlalchemy_model_service import (
+        SQLAlchemyModelServiceInstrumentator,
+    )
     from todo_api.opentelemetry.sqlalchemy_service import SQLAlchemyServiceInstrumentator
     from todo_api.version import __version__
 
     configure_logging(settings.LOG_LEVEL, settings.ENVIRONMENT, settings.ENABLED_LOGGERS)
 
     SQLAlchemyServiceInstrumentator().instrument()
+    SQLAlchemyModelServiceInstrumentator().instrument()
 
     app = FastAPI(
         title=settings.APP_NAME,

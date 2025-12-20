@@ -1,6 +1,6 @@
-from {{ root_package }}.core.service.sqlalchemy import SQLAlchemyService
+from {{ root_package }}.core.service.sqlalchemy import SQLAlchemyModelService
 from {{ root_package }}.{{ package_name }}.models import {{ package_name | capitalize }}
 
 
-class {{ package_name | capitalize }}Service(SQLAlchemyService[{{ package_name | capitalize }}, int]):
+class {{ package_name | capitalize }}Service(SQLAlchemyModelService[{{ package_name | capitalize }}, int]):
     model = {{ package_name | capitalize }}

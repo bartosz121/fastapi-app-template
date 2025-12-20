@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from fastapi.responses import Response
 
 from todo_api.auth.models import UserSession
-from todo_api.core.service.sqlalchemy import SQLAlchemyService
+from todo_api.core.service.sqlalchemy import SQLAlchemyModelService
 from todo_api.utils import utc_now
 
 
-class UserSessionService(SQLAlchemyService[UserSession, int]):
+class UserSessionService(SQLAlchemyModelService[UserSession, int]):
     model = UserSession
 
 

@@ -2,7 +2,7 @@
 
 from collections.abc import Generator, Iterable, Sequence
 from contextlib import contextmanager
-from typing import Any, Literal, NamedTuple, TypeVar
+from typing import Any, Literal, NamedTuple, TypeVar, cast
 
 import structlog
 from sqlalchemy import Select, asc, desc, func as sqla_func, over, select
@@ -41,7 +41,56 @@ U = TypeVar("U")
 RESERVED_KWARGS = {"offset", "limit", "order_by"}
 
 
-class SQLAlchemyService[T, U]:
+class SQLAlchemyService:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def execute_one[V](self, statement: Select[tuple[V]]) -> V:
+        with sql_error_handler():
+            result = await self.session.execute(statement)
+            instance = result.scalar_one_or_none()
+            if instance is None:
+                raise NotFound(detail="No record found")
+            return instance
+
+    async def execute_one_or_none[V](self, statement: Select[tuple[V]]) -> V | None:
+        with sql_error_handler():
+            result = await self.session.execute(statement)
+            return result.scalar_one_or_none()
+
+    async def execute_list[V](self, statement: Select[tuple[V]]) -> Sequence[V]:
+        with sql_error_handler():
+            result = await self.session.execute(statement)
+            return list(result.scalars().all())
+
+    async def execute_rows[V: tuple[Any, ...]](self, statement: Select[V]) -> Sequence[V]:
+        """Execute a custom SQL statement and return all rows (no scalars() unwrapping)."""
+        with sql_error_handler():
+            result = await self.session.execute(statement)
+            return cast(Sequence[V], result.all())
+
+    async def execute_list_and_count[V](
+        self,
+        statement: Select[tuple[V]],
+    ) -> tuple[Sequence[V], int]:
+        with sql_error_handler():
+            stmt = statement.add_columns(over(sqla_func.count()))
+            result = await self.session.execute(stmt)
+            rows = result.all()
+
+            total_count = 0
+            items: list[V] = []
+
+            for i, row in enumerate(rows):
+                instance, count_value = cast(tuple[V, int], row)
+                items.append(instance)
+                if i == 0:
+                    total_count = count_value
+
+            return items, total_count
+
+
+class SQLAlchemyModelService[T, U]:
     model: type[T]
     model_id_attr_name: str = "id"
 

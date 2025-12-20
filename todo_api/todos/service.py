@@ -1,6 +1,6 @@
-from todo_api.core.service.sqlalchemy import SQLAlchemyService
+from todo_api.core.service.sqlalchemy import SQLAlchemyModelService
 from todo_api.todos.models import Todo
 
 
-class TodoService(SQLAlchemyService[Todo, int]):
+class TodoService(SQLAlchemyModelService[Todo, int]):
     model = Todo

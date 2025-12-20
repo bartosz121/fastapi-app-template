@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from todo_api.core.database.base import AsyncSessionMaker, SyncSessionMaker
+from todo_api.core.service.sqlalchemy import SQLAlchemyService as SQLAlchemyService_
 
 
 def get_session(request: Request) -> Generator[Session, Any]:
@@ -44,8 +45,16 @@ async def get_async_session(request: Request) -> AsyncGenerator[AsyncSession, An
 
 AsyncDbSession = Annotated[AsyncSession, Depends(get_async_session)]
 
+
+async def get_sqlalchemy_service(session: AsyncDbSession) -> SQLAlchemyService_:
+    return SQLAlchemyService_(session)
+
+
+SQLAlchemyService = Annotated[SQLAlchemyService_, Depends(get_sqlalchemy_service)]
+
 __all__ = (
     "get_session",
     "DbSession",
     "AsyncDbSession",
+    "SQLAlchemyService",
 )

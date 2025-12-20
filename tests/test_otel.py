@@ -84,7 +84,7 @@ async def test_logging_adds_trace_context(capsys: pytest.CaptureFixture[str]):
     assert log_dict_with_parent["parent_span_id"] == parent_span_id
 
 
-async def test_sqlalchemy_service_instrumentation_adds_attributes():
+async def test_sqlalchemy_model_service_instrumentation_adds_attributes():
     """Test that SQLAlchemy service method calls create spans with model/record attributes"""
     from opentelemetry import trace
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
@@ -93,8 +93,10 @@ async def test_sqlalchemy_service_instrumentation_adds_attributes():
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
-    from todo_api.core.service.sqlalchemy import SQLAlchemyService
-    from todo_api.opentelemetry.sqlalchemy_service import SQLAlchemyServiceInstrumentator
+    from todo_api.core.service.sqlalchemy import SQLAlchemyModelService
+    from todo_api.opentelemetry.sqlalchemy_model_service import (
+        SQLAlchemyModelServiceInstrumentator,
+    )
 
     provider = trace.get_tracer_provider()
 
@@ -104,11 +106,11 @@ async def test_sqlalchemy_service_instrumentation_adds_attributes():
 
     # Clean up any previous instrumentation and instrument
     try:
-        SQLAlchemyServiceInstrumentator().uninstrument()
+        SQLAlchemyModelServiceInstrumentator().uninstrument()
     except Exception:
         pass
 
-    SQLAlchemyServiceInstrumentator().instrument(tracer_provider=provider)
+    SQLAlchemyModelServiceInstrumentator().instrument(tracer_provider=provider)
 
     metadata = MetaData()
     Base = declarative_base(metadata=metadata)
@@ -118,7 +120,7 @@ async def test_sqlalchemy_service_instrumentation_adds_attributes():
         id: Mapped[int] = mapped_column(primary_key=True)
         name: Mapped[str] = mapped_column()
 
-    class TestService(SQLAlchemyService[TestModel, int]):
+    class TestService(SQLAlchemyModelService[TestModel, int]):
         model = TestModel
 
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
@@ -152,6 +154,61 @@ async def test_sqlalchemy_service_instrumentation_adds_attributes():
             assert span_attrs["model_type"] == "TestModel"
             assert "record_id" in span_attrs
             assert span_attrs["record_id"] == "1"
+    finally:
+        SQLAlchemyModelServiceInstrumentator().uninstrument()
+        await engine.dispose()
+
+
+async def test_sqlalchemy_service_instrumentation_creates_spans():
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+    from sqlalchemy import MetaData, select
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy.orm import Mapped, declarative_base, mapped_column
+
+    from todo_api.core.service.sqlalchemy import SQLAlchemyService
+    from todo_api.opentelemetry.sqlalchemy_service import SQLAlchemyServiceInstrumentator
+
+    provider = trace.get_tracer_provider()
+
+    exporter = InMemorySpanExporter()
+    processor = SimpleSpanProcessor(exporter)
+    provider.add_span_processor(processor)  # type: ignore
+
+    try:
+        SQLAlchemyServiceInstrumentator().uninstrument()
+    except Exception:
+        pass
+
+    SQLAlchemyServiceInstrumentator().instrument(tracer_provider=provider)
+
+    metadata = MetaData()
+    Base = declarative_base(metadata=metadata)
+
+    class TestModel(Base):
+        __tablename__ = "test_executor_otel"
+        id: Mapped[int] = mapped_column(primary_key=True)
+
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
+
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        async with sessionmaker() as session:
+            service = SQLAlchemyService(session)
+            tracer = provider.get_tracer(__name__)
+
+            with tracer.start_as_current_span("test_executor_call"):
+                stmt = select(TestModel)
+                await service.execute_list(stmt)
+
+            spans = exporter.get_finished_spans()
+            executor_spans = [s for s in spans if s.name == "execute_list"]
+            assert len(executor_spans) > 0, "No 'execute_list' span found"
+
     finally:
         SQLAlchemyServiceInstrumentator().uninstrument()
         await engine.dispose()

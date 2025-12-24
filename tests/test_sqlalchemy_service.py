@@ -4,9 +4,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from todo_api.core.database.base import Model
+from todo_api.core.database.mixins import TimestampMixin
 from todo_api.core.exceptions import NotFound
 from todo_api.core.service.sqlalchemy import SQLAlchemyService
-from todo_api.users.models import User
+
+
+class User_(TimestampMixin, Model):
+    __tablename__ = "users_test"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(64))
+    hashed_password: Mapped[str] = mapped_column(String)
 
 
 @pytest.fixture
@@ -15,10 +23,10 @@ async def service(session: AsyncSession) -> SQLAlchemyService:
 
 
 @pytest.fixture
-async def seeded_users(session: AsyncSession) -> list[User]:
+async def seeded_users(session: AsyncSession) -> list[User_]:
     users = [
-        User(username="user1", hashed_password="pw1"),
-        User(username="user2", hashed_password="pw2"),
+        User_(username="user1", hashed_password="pw1"),
+        User_(username="user2", hashed_password="pw2"),
     ]
     session.add_all(users)
     await session.commit()
@@ -27,44 +35,44 @@ async def seeded_users(session: AsyncSession) -> list[User]:
     return users
 
 
-async def test_execute_one_success(service: SQLAlchemyService, seeded_users: list[User]):
+async def test_execute_one_success(service: SQLAlchemyService, seeded_users: list[User_]):
     user = seeded_users[0]
-    stmt = select(User).where(User.id == user.id)
+    stmt = select(User_).where(User_.id == user.id)
     result = await service.execute_one(stmt)
     assert result.id == user.id
     assert result.username == "user1"
 
 
 async def test_execute_one_not_found(service: SQLAlchemyService):
-    stmt = select(User).where(User.id == 999)
+    stmt = select(User_).where(User_.id == 999)
     with pytest.raises(NotFound):
         await service.execute_one(stmt)
 
 
-async def test_execute_one_or_none_success(service: SQLAlchemyService, seeded_users: list[User]):
+async def test_execute_one_or_none_success(service: SQLAlchemyService, seeded_users: list[User_]):
     user = seeded_users[0]
-    stmt = select(User).where(User.id == user.id)
+    stmt = select(User_).where(User_.id == user.id)
     result = await service.execute_one_or_none(stmt)
     assert result is not None
     assert result.id == user.id
 
 
 async def test_execute_one_or_none_none(service: SQLAlchemyService):
-    stmt = select(User).where(User.id == 999)
+    stmt = select(User_).where(User_.id == 999)
     result = await service.execute_one_or_none(stmt)
     assert result is None
 
 
-async def test_execute_list_success(service: SQLAlchemyService, seeded_users: list[User]):
-    stmt = select(User).order_by(User.username.asc())
+async def test_execute_list_success(service: SQLAlchemyService, seeded_users: list[User_]):
+    stmt = select(User_).order_by(User_.username.asc())
     results = await service.execute_list(stmt)
     assert len(results) == 2
     assert results[0].username == "user1"
     assert results[1].username == "user2"
 
 
-async def test_execute_rows_multi_column(service: SQLAlchemyService, seeded_users: list[User]):
-    stmt = select(User.id, User.username).order_by(User.username.asc())
+async def test_execute_rows_multi_column(service: SQLAlchemyService, seeded_users: list[User_]):
+    stmt = select(User_.id, User_.username).order_by(User_.username.asc())
     results = await service.execute_rows(stmt)
     assert len(results) == 2
     assert results[0][1] == "user1"
@@ -72,17 +80,17 @@ async def test_execute_rows_multi_column(service: SQLAlchemyService, seeded_user
 
 
 async def test_execute_list_and_count_success(
-    service: SQLAlchemyService, seeded_users: list[User]
+    service: SQLAlchemyService, seeded_users: list[User_]
 ):
-    stmt = select(User).order_by(User.username.asc())
+    stmt = select(User_).order_by(User_.username.asc())
     items, count = await service.execute_list_and_count(stmt)
     assert count == 2
     assert len(items) == 2
     assert items[0].username == "user1"
 
 
-async def test_execute_rows_cte(service: SQLAlchemyService, seeded_users: list[User]):
-    cte = select(User.id, User.username).where(User.username == "user1").cte("user_cte")
+async def test_execute_rows_cte(service: SQLAlchemyService, seeded_users: list[User_]):
+    cte = select(User_.id, User_.username).where(User_.username == "user1").cte("user_cte")
     stmt = select(cte.c.id, cte.c.username)
     results = await service.execute_rows(stmt)
     assert len(results) == 1
@@ -121,8 +129,8 @@ async def seeded_data(session: AsyncSession):
     return dept1, dept2
 
 
-async def test_execute_rows_raw_sql(service: SQLAlchemyService, seeded_users: list[User]):
-    stmt = select(text("id, username")).select_from(text("users")).order_by(text("username"))
+async def test_execute_rows_raw_sql(service: SQLAlchemyService, seeded_users: list[User_]):
+    stmt = select(text("id, username")).select_from(text("users_test")).order_by(text("username"))
     results = await service.execute_rows(stmt)
 
     assert len(results) == 2

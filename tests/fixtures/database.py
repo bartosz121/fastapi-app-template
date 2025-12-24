@@ -36,11 +36,12 @@ async def initialize_test_database(engine: AsyncEngine):
 
     yield
 
+    await engine.dispose()
     drop_database(sync_db_dsn)
 
 
 @pytest_asyncio.fixture
-async def session() -> AsyncGenerator[AsyncSession]:
+async def session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     async_db_dsn = settings.get_sqlite_dsn(driver="aiosqlite")
     engine = create_async_engine(async_db_dsn, echo=True)
     conn = await engine.connect()
@@ -51,8 +52,8 @@ async def session() -> AsyncGenerator[AsyncSession]:
     yield session
 
     await transaction.rollback()
+    await session.close()
     await conn.close()
-    await engine.dispose()
 
 
 SaveModel = Callable[[Model], Coroutine[Any, Any, None]]

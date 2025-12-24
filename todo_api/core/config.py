@@ -70,10 +70,10 @@ class Settings(BaseSettings):
         return timedelta(hours=self.USER_SESSION_TTL)
 
     # postgres
-    # def get_postgres_dsn(self, driver: Literal["asyncpg", "psycopg2"]) -> str:
+    # def get_postgres_dsn(self) -> str:
     #     return str(
     #         PostgresDsn.build(
-    #             scheme=f"postgresql+{driver}",
+    #             scheme="postgresql+psycopg",
     #             username=self.DB_USER,
     #             password=self.DB_PASSWORD.get_secret_value(),
     #             host=self.DB_HOST,

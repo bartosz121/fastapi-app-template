@@ -56,10 +56,9 @@ class Settings(BaseSettings):
     DB_SCHEME: str = "sqlite:///database.db"
     # postgres
     # DB_HOST: str = ""
-    # DB_NAME: str = ""
+    # DB_DATABASE: str = ""
     # DB_USER: str = ""
     # DB_PASSWORD: SecretStr
-    # DB_DATABASE: str = ""
     # DB_PORT: int
 
     def get_sqlite_dsn(self, *, driver: Literal["aiosqlite"] | None = None) -> str:

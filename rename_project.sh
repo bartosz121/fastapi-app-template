@@ -61,7 +61,7 @@ EXCLUDES=(
 )
 
 # Replace package name (todo_api)
-find . -type f "${EXCLUDES[@]}" -print0 | xargs -0 sed -i "s/\b$OLD_PACKAGE_NAME\b/$NEW_PACKAGE_NAME/g"
+find . -type f "${EXCLUDES[@]}" -print0 | xargs -0 sed -i "s/$OLD_PACKAGE_NAME/$NEW_PACKAGE_NAME/g"
 
 # Replace project name (todo-api)
 find . -type f "${EXCLUDES[@]}" -print0 | xargs -0 sed -i "s/$OLD_PROJECT_NAME/$NEW_PROJECT_NAME/g"

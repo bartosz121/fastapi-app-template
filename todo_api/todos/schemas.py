@@ -1,13 +1,13 @@
-from todo_api.core.schemas import BaseModel, BaseModelId, Timestamp
+from todo_api.core.schemas import BaseSchema, BaseSchemaId, Timestamp
 
 
-class TodoBase(BaseModel):
+class TodoBase(BaseSchema):
     title: str
     description: str | None = None
     is_completed: bool
 
 
-class TodoRead(Timestamp, TodoBase, BaseModelId[int]): ...
+class TodoRead(Timestamp, TodoBase, BaseSchemaId[int]): ...
 
 
 class TodoCreate(TodoBase):

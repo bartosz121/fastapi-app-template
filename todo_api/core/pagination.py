@@ -12,7 +12,7 @@ from fastapi import Depends, Query
 from pydantic import Field, model_validator
 
 from todo_api.core.exceptions import BadRequest
-from todo_api.core.schemas import BaseModel
+from todo_api.core.schemas import BaseSchema
 
 ModelT = TypeVar("ModelT")
 
@@ -47,7 +47,7 @@ async def get_pagination_params(
 PaginationParamsQuery = Annotated[PaginationParams, Depends(get_pagination_params)]
 
 
-class Paginated[ModelT](BaseModel):
+class Paginated[ModelT](BaseSchema):
     items: Sequence[ModelT]
     page: Annotated[int, Field(gt=0, description="Page number")]
     size: Annotated[int, Field(gt=0, le=100, description="Page size")]

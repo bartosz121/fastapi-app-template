@@ -27,8 +27,16 @@ INPUT_NAME=$1
 NEW_PACKAGE_NAME=$(echo "$INPUT_NAME" | sed 's/-/_/g' | tr '[:upper:]' '[:lower:]')
 NEW_PROJECT_NAME=$(echo "$INPUT_NAME" | sed 's/_/-/g' | tr '[:upper:]' '[:lower:]')
 
+# Function to convert snake_case to PascalCase
+to_pascal_case() {
+    echo "$1" | sed -r 's/(^|_)([a-z])/\U\2/g'
+}
+
+OLD_PASCAL_NAME=$(to_pascal_case "$OLD_PACKAGE_NAME")
+NEW_PASCAL_NAME=$(to_pascal_case "$NEW_PACKAGE_NAME")
+
 echo "---"
-echo "Renaming project from '$OLD_PROJECT_NAME' ($OLD_PACKAGE_NAME) to '$NEW_PROJECT_NAME' ($NEW_PACKAGE_NAME)"
+echo "Renaming project from '$OLD_PROJECT_NAME' ($OLD_PACKAGE_NAME / $OLD_PASCAL_NAME) to '$NEW_PROJECT_NAME' ($NEW_PACKAGE_NAME / $NEW_PASCAL_NAME)"
 echo "---"
 
 if [ "$OLD_PACKAGE_NAME" != "$NEW_PACKAGE_NAME" ]; then
@@ -57,6 +65,9 @@ find . -type f "${EXCLUDES[@]}" -print0 | xargs -0 sed -i "s/\b$OLD_PACKAGE_NAME
 
 # Replace project name (todo-api)
 find . -type f "${EXCLUDES[@]}" -print0 | xargs -0 sed -i "s/$OLD_PROJECT_NAME/$NEW_PROJECT_NAME/g"
+
+# Replace PascalCase name (TodoApi)
+find . -type f "${EXCLUDES[@]}" -print0 | xargs -0 sed -i "s/$OLD_PASCAL_NAME/$NEW_PASCAL_NAME/g"
 
 echo "Formatting the code..."
 uv run poe format

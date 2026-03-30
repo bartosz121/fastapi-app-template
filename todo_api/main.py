@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from typing import TypedDict, cast
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from todo_api.api import router_v1
 from todo_api.core.config import settings
@@ -72,6 +73,20 @@ def create_app() -> FastAPI:
 
     configure_middleware(app, settings.ENVIRONMENT)
     configure_exception_handlers(app)
+
+    # Configure CORS
+    if settings.ENVIRONMENT.is_development:
+        cors_origins = ["*"]
+    else:
+        cors_origins = settings.ALLOWED_ORIGINS
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.get("/health")
     async def health():  # pyright: ignore[reportUnusedFunction] # noqa: ANN202

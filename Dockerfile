@@ -2,6 +2,8 @@ ARG ENVIRONMENT=DEVELOPMENT
 
 FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
 
+ARG ENVIRONMENT
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \

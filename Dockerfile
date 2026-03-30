@@ -3,7 +3,10 @@ ARG ENVIRONMENT=DEVELOPMENT
 FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
 ENV UV_COMPILE_BYTECODE=1 \
@@ -39,7 +42,9 @@ RUN if [ "${ENVIRONMENT}" = "PRODUCTION" ]; then \
 FROM python:3.14-slim-bookworm AS final
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git && \
+    apt-get install -y --no-install-recommends \
+    git \
+    libpq5 && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder --chown=app:app /app /app

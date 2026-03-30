@@ -24,6 +24,7 @@ dependencies = [
     "opentelemetry-instrumentation-sqlalchemy>=0.60b0,<1",
     "opentelemetry-exporter-otlp>=1.39.0,<2",
     "wrapt>=1.17.3,<2",
+    "psycopg[c]>=3.3.3,<4",
 ]
 
 
@@ -103,7 +104,7 @@ filterwarnings = [
     # This happens because the app is initialized for each test, which is fine for testing
     "ignore:Repeated configuration attempted:RuntimeWarning:todo_api.core.logging",
 ]
-env = ["ENVIRONMENT=TESTING"]
+env = ["ENVIRONMENT=TESTING", "DB_DATABASE=todo_api_test"]
 
 [tool.poe.tasks]
 format = { shell = "ruff format . && ruff check --fix ." }

@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: todo-api-postgres
+    environment:
+      POSTGRES_USER: todo_api
+      POSTGRES_PASSWORD: todo_api
+      POSTGRES_DB: todo_api
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todo_api -d todo_api"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   todo-api:
     build:
       context: ..
@@ -24,6 +42,9 @@ services:
       - "8000"
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       ENVIRONMENT: PRODUCTION
       LOG_LEVEL: INFO
@@ -38,9 +59,12 @@ services:
       AUTH_COOKIE_DOMAIN: localhost
       JWT_EXPIRATION: "259200"
       PROMETHEUS_MULTIPROC_DIR: /tmp/prometheus
-      DB_SCHEME: "sqlite:///database.db"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: todo_api
+      DB_USER: todo_api
+      DB_PASSWORD: todo_api
     volumes:
-      - ../database.db:/app/database.db
       - /tmp/prometheus:/tmp/prometheus
     restart: unless-stopped
     healthcheck:
@@ -55,3 +79,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  postgres_data:

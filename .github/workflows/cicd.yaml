@@ -5,6 +5,20 @@ on: [push, pull_request]
 jobs:
   checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: todo_api
+          POSTGRES_PASSWORD: todo_api
+          POSTGRES_DB: todo_api_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U todo_api -d todo_api_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -29,7 +43,11 @@ jobs:
 
       - name: Run tests
         env:
-          DB_URL: sqlite+aiosqlite:///test.db
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          DB_DATABASE: todo_api_test
+          DB_USER: todo_api
+          DB_PASSWORD: todo_api
           SECRET: cdd934f9ba2d8bcc2100fbbdbf32e7dc
           AUTH_COOKIE_NAME: todo_auth
           AUTH_COOKIE_DOMAIN: 127.0.0.1

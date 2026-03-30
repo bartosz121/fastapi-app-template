@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from sqlalchemy import Select, select
-from sqlalchemy.dialects import sqlite
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, Mapped, mapped_column
@@ -13,7 +13,7 @@ from todo_api.core.database.base import Model
 from todo_api.core.exceptions import Conflict, NotFound
 from todo_api.core.service.sqlalchemy import OrderBy, ServiceError, SQLAlchemyModelService
 
-DIALECT = sqlite.dialect()
+DIALECT = postgresql.dialect()
 
 
 def assert_statement_equal(stmt1: Select, stmt2: Select):  # pyright: ignore[reportMissingTypeArgument, reportUnknownParameterType]

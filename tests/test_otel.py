@@ -93,6 +93,7 @@ async def test_sqlalchemy_model_service_instrumentation_adds_attributes():
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
+    from todo_api.core.config import settings
     from todo_api.core.service.sqlalchemy import SQLAlchemyModelService
     from todo_api.opentelemetry.sqlalchemy_model_service import (
         SQLAlchemyModelServiceInstrumentator,
@@ -123,11 +124,12 @@ async def test_sqlalchemy_model_service_instrumentation_adds_attributes():
     class TestService(SQLAlchemyModelService[TestModel, int]):
         model = TestModel
 
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    engine = create_async_engine(settings.get_postgres_dsn())
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
     try:
         async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
 
         async with sessionmaker() as session:
@@ -155,6 +157,8 @@ async def test_sqlalchemy_model_service_instrumentation_adds_attributes():
             assert "record_id" in span_attrs
             assert span_attrs["record_id"] == "1"
     finally:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
         SQLAlchemyModelServiceInstrumentator().uninstrument()
         await engine.dispose()
 
@@ -167,6 +171,7 @@ async def test_sqlalchemy_service_instrumentation_creates_spans():
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
+    from todo_api.core.config import settings
     from todo_api.core.service.sqlalchemy import SQLAlchemyService
     from todo_api.opentelemetry.sqlalchemy_service import SQLAlchemyServiceInstrumentator
 
@@ -190,11 +195,12 @@ async def test_sqlalchemy_service_instrumentation_creates_spans():
         __tablename__ = "test_executor_otel"
         id: Mapped[int] = mapped_column(primary_key=True)
 
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    engine = create_async_engine(settings.get_postgres_dsn())
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
     try:
         async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
 
         async with sessionmaker() as session:
@@ -210,5 +216,7 @@ async def test_sqlalchemy_service_instrumentation_creates_spans():
             assert len(executor_spans) > 0, "No 'execute_list' span found"
 
     finally:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
         SQLAlchemyServiceInstrumentator().uninstrument()
         await engine.dispose()

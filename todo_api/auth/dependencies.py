@@ -1,5 +1,4 @@
 from typing import Annotated
-from zoneinfo import ZoneInfo
 
 import structlog
 from fastapi import Depends, Request
@@ -51,13 +50,7 @@ async def get_user_from_session(
     if session_token:
         user_session = await user_session_service.get_one_or_none(session_token=session_token)
         if user_session:
-            # TODO: This timezone handling is specific to SQLite
-            # Remove if moving to a different database (e.g., PostgreSQL),
-            expires_at_aware = user_session.expires_at
-            if expires_at_aware.tzinfo is None:
-                expires_at_aware = expires_at_aware.replace(tzinfo=ZoneInfo("UTC"))
-
-            if expires_at_aware > utc_now():
+            if user_session.expires_at > utc_now():
                 return user_session.user
 
     return AnonymousUser()

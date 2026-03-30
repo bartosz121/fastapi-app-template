@@ -1,5 +1,4 @@
 from datetime import timedelta
-from zoneinfo import ZoneInfo
 
 import httpx
 import pytest
@@ -44,12 +43,7 @@ async def test_session_creation_on_login(
     ).scalar_one_or_none()
     assert user_session is not None
     assert user_session.user_id == user.id
-    expires_at_aware = user_session.expires_at
-    # TODO: This timezone handling is specific to SQLite
-    # Remove if moving to a different database (e.g., PostgreSQL),
-    if expires_at_aware.tzinfo is None:
-        expires_at_aware = expires_at_aware.replace(tzinfo=ZoneInfo("UTC"))
-    assert expires_at_aware > utc_now()
+    assert user_session.expires_at > utc_now()
 
 
 @pytest.mark.auth(AuthenticateAs(type_="dont_override"))

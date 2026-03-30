@@ -1,9 +1,9 @@
 from datetime import timedelta
 from enum import StrEnum
-from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
+from sqlalchemy.engine import URL
 
 
 class Environment(StrEnum):
@@ -54,34 +54,24 @@ class Settings(BaseSettings):
     PROMETHEUS_MULTIPROC_DIR: str | None = "/tmp/prometheus"
     ALLOWED_ORIGINS: list[str] = ["*"]
 
-    DB_SCHEME: str = "sqlite:///database.db"
-    # postgres
-    # DB_HOST: str = ""
-    # DB_DATABASE: str = ""
-    # DB_USER: str = ""
-    # DB_PASSWORD: SecretStr
-    # DB_PORT: int
-
-    def get_sqlite_dsn(self, *, driver: Literal["aiosqlite"] | None = None) -> str:
-        if driver is None:
-            return self.DB_SCHEME
-        return f"sqlite+{driver}:///database.db"
+    DB_HOST: str = "127.0.0.1"
+    DB_DATABASE: str = "todo_api"
+    DB_USER: str = "todo_api"
+    DB_PASSWORD: SecretStr = SecretStr("todo_api")
+    DB_PORT: int = 5432
 
     def get_user_session_ttl_timedelta(self) -> timedelta:
         return timedelta(hours=self.USER_SESSION_TTL)
 
-    # postgres
-    # def get_postgres_dsn(self) -> str:
-    #     return str(
-    #         PostgresDsn.build(
-    #             scheme="postgresql+psycopg",
-    #             username=self.DB_USER,
-    #             password=self.DB_PASSWORD.get_secret_value(),
-    #             host=self.DB_HOST,
-    #             port=self.DB_PORT,
-    #             path=self.DB_DATABASE,
-    #         )
-    #     )
+    def get_postgres_dsn(self) -> str:
+        return URL.create(
+            "postgresql+psycopg",
+            username=self.DB_USER,
+            password=self.DB_PASSWORD.get_secret_value(),
+            host=self.DB_HOST,
+            port=self.DB_PORT,
+            database=self.DB_DATABASE,
+        ).render_as_string(hide_password=False)
 
 
 settings = Settings()

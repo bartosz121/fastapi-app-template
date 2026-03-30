@@ -60,9 +60,9 @@ def create_async_engine(
     )
 
 
-engine = create_engine(dsn=settings.get_sqlite_dsn(), debug=settings.ENVIRONMENT.is_qa)
+engine = create_engine(dsn=settings.get_postgres_dsn(), debug=settings.ENVIRONMENT.is_qa)
 async_engine = create_async_engine(
-    dsn=settings.get_sqlite_dsn(driver="aiosqlite"), debug=settings.ENVIRONMENT.is_qa
+    dsn=settings.get_postgres_dsn(), debug=settings.ENVIRONMENT.is_qa
 )
 
 SQLAlchemyInstrumentor().instrument(engines=[engine, async_engine.sync_engine])

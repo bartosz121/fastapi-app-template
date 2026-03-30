@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from typing import Any, Literal, NamedTuple, TypeVar, cast
 
 import structlog
-from sqlalchemy import Select, asc, desc, func as sqla_func, over, select
+from sqlalchemy import Select, asc, desc, func as sqla_func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
@@ -74,19 +74,16 @@ class SQLAlchemyService:
         statement: Select[tuple[V]],
     ) -> tuple[Sequence[V], int]:
         with sql_error_handler():
-            stmt = statement.add_columns(over(sqla_func.count()))
-            result = await self.session.execute(stmt)
-            rows = result.all()
+            count_stmt = select(sqla_func.count()).select_from(
+                statement.order_by(None).limit(None).offset(None).subquery()
+            )
+            total_count = (await self.session.execute(count_stmt)).scalar_one()
 
-            total_count = 0
-            items: list[V] = []
+            if total_count == 0:
+                return [], 0
 
-            for i, row in enumerate(rows):
-                instance, count_value = cast(tuple[V, int], row)
-                items.append(instance)
-                if i == 0:
-                    total_count = count_value
-
+            result = await self.session.execute(statement)
+            items = list(result.scalars().all())
             return items, total_count
 
 
@@ -333,25 +330,26 @@ class SQLAlchemyModelService[T, U]:
         **kwargs: Any,
     ) -> tuple[Sequence[T], int]:
         with sql_error_handler():
-            stmt = self._get_statement(statement)
-            stmt = self._where_from_kwargs(stmt, **kwargs)
-            stmt = self._order_by_from_kwargs(stmt, **kwargs)
-            stmt = self._paginate_from_kwargs(stmt, **kwargs)
+            base_stmt = self._get_statement(statement)
+            base_stmt = self._where_from_kwargs(base_stmt, **kwargs)
 
-            stmt = stmt.add_columns(over(sqla_func.count()))
+            count_stmt = select(sqla_func.count()).select_from(
+                base_stmt.with_only_columns(self._get_model_id_attr()).subquery()
+            )
 
-            result = await self.session.execute(stmt)
-            rows = result.all()
+            total_count = (await self.session.execute(count_stmt)).scalar_one()
 
-            total_count = 0
-            items: list[T] = []
+            if total_count == 0:
+                return [], 0
 
-            for i, row in enumerate(rows):
-                instance, count_value = row
-                self._expunge(instance, auto_expunge=auto_expunge)
-                items.append(instance)
-                if i == 0:
-                    total_count = count_value
+            data_stmt = self._paginate_from_kwargs(base_stmt, **kwargs)
+            data_stmt = self._order_by_from_kwargs(data_stmt, **kwargs)
+
+            result = await self.session.execute(data_stmt)
+            items = list(result.scalars().all())
+
+            for item in items:
+                self._expunge(item, auto_expunge=auto_expunge)
 
             return items, total_count
 

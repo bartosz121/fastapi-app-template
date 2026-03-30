@@ -89,6 +89,17 @@ async def test_execute_list_and_count_success(
     assert items[0].username == "user1"
 
 
+async def test_execute_list_and_count_with_pagination(
+    service: SQLAlchemyService, seeded_users: list[User_]
+):
+    stmt = select(User_).order_by(User_.username.asc()).limit(1).offset(1)
+    items, count = await service.execute_list_and_count(stmt)
+
+    assert count == 2
+    assert len(items) == 1
+    assert items[0].username == "user2"
+
+
 async def test_execute_rows_cte(service: SQLAlchemyService, seeded_users: list[User_]):
     cte = select(User_.id, User_.username).where(User_.username == "user1").cte("user_cte")
     stmt = select(cte.c.id, cte.c.username)

@@ -43,6 +43,7 @@ jobs:
 
       - name: Run tests
         env:
+          PYTEST_XDIST_AUTO_NUM_WORKERS: "2"
           DB_HOST: 127.0.0.1
           DB_PORT: "5432"
           DB_DATABASE: todo_api_test
@@ -52,4 +53,4 @@ jobs:
           AUTH_COOKIE_NAME: todo_auth
           AUTH_COOKIE_DOMAIN: 127.0.0.1
           PROMETHEUS_MULTIPROC_DIR: /tmp/prometheus
-        run: uv run pytest -vv
+        run: uv run pytest -vv -n auto

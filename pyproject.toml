@@ -46,6 +46,7 @@ dev = [
     "asgi-lifespan>=2.1.0,<3",
     "jinja2>=3.1.6,<4",
     "pytest-env>=1.2.0,<2",
+    "pytest-xdist>=3.8.0,<4",
 ]
 
 [build-system]
@@ -98,7 +99,7 @@ exclude_lines = [
 [tool.pytest]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-markers = ["auth"]
+markers = ["auth", "db"]
 filterwarnings = [
     "ignore:Accessing argon2.__version__ is deprecated:DeprecationWarning:passlib.handlers.argon2",
     # This happens because the app is initialized for each test, which is fine for testing
@@ -110,5 +111,5 @@ env = ["ENVIRONMENT=TESTING", "DB_DATABASE=todo_api_test"]
 format = { shell = "ruff format . && ruff check --fix ." }
 lint = { shell = "ruff format --check . && ruff check ." }
 typecheck = "pyright --warnings ."
-test = "pytest -vv"
+test = "pytest -vv -n auto"
 cli = "python -m todo_api.cli"

@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from todo_api.core.config import Environment
 
@@ -84,16 +85,15 @@ async def test_logging_adds_trace_context(capsys: pytest.CaptureFixture[str]):
     assert log_dict_with_parent["parent_span_id"] == parent_span_id
 
 
-async def test_sqlalchemy_model_service_instrumentation_adds_attributes():
+async def test_sqlalchemy_model_service_instrumentation_adds_attributes(engine: AsyncEngine):
     """Test that SQLAlchemy service method calls create spans with model/record attributes"""
     from opentelemetry import trace
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
     from sqlalchemy import MetaData
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy.ext.asyncio import async_sessionmaker
     from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
-    from todo_api.core.config import settings
     from todo_api.core.service.sqlalchemy import SQLAlchemyModelService
     from todo_api.opentelemetry.sqlalchemy_model_service import (
         SQLAlchemyModelServiceInstrumentator,
@@ -124,7 +124,6 @@ async def test_sqlalchemy_model_service_instrumentation_adds_attributes():
     class TestService(SQLAlchemyModelService[TestModel, int]):
         model = TestModel
 
-    engine = create_async_engine(settings.get_postgres_dsn())
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
     try:
@@ -160,18 +159,16 @@ async def test_sqlalchemy_model_service_instrumentation_adds_attributes():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
         SQLAlchemyModelServiceInstrumentator().uninstrument()
-        await engine.dispose()
 
 
-async def test_sqlalchemy_service_instrumentation_creates_spans():
+async def test_sqlalchemy_service_instrumentation_creates_spans(engine: AsyncEngine):
     from opentelemetry import trace
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
     from sqlalchemy import MetaData, select
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy.ext.asyncio import async_sessionmaker
     from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
-    from todo_api.core.config import settings
     from todo_api.core.service.sqlalchemy import SQLAlchemyService
     from todo_api.opentelemetry.sqlalchemy_service import SQLAlchemyServiceInstrumentator
 
@@ -195,7 +192,6 @@ async def test_sqlalchemy_service_instrumentation_creates_spans():
         __tablename__ = "test_executor_otel"
         id: Mapped[int] = mapped_column(primary_key=True)
 
-    engine = create_async_engine(settings.get_postgres_dsn())
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
     try:
@@ -219,4 +215,3 @@ async def test_sqlalchemy_service_instrumentation_creates_spans():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
         SQLAlchemyServiceInstrumentator().uninstrument()
-        await engine.dispose()

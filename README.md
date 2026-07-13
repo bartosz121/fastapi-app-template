@@ -1,6 +1,6 @@
 # FastAPI REST API Template
 
-- **Python 3.13**
+- **Python 3.14**
 - **uv**
 - **Pyright**
 - [**Poe**](https://github.com/nat-n/poethepoet) task runner
@@ -9,7 +9,8 @@
 - [**CLI Tool**](/todo_api/cli/__main__.py)
   - `uv run poe cli -h`
   - `add_package` command: bootstraps a new Python package with CRUD operations and tests. See source for details
-- [**Generic SQLAlchemy async service**](todo_api/core/service/sqlalchemy.py)
+- [**Generic SQLAlchemy async service**](todo_api/core/database/service.py)
+- **Package boundaries:** `todo_api/core` holds database, application exceptions, logging, and observability; `todo_api/api` holds the FastAPI/REST adapter (routers, schemas, dependencies, middleware, and HTTP error handling).
 - **Session-based Authentication:** Integrated with FastAPI dependency injection system
 - **User Management**
 - **Tests setup:** Includes database session management and authentication fixtures
@@ -18,10 +19,6 @@
 **Seed data for tests:**
 
 Use `seed_db` fixture in `tests/fixtures/database.py` to add seed data for your tests
-
-**Note on Timezone Handling:**
-
-If switching from SQLite to another database (e.g., PostgreSQL), review `todo_api/auth/dependencies.py`. A `TODO:` comment indicates a SQLite-specific timezone conversion that may need removal or adjustment
 
 ## Renaming the Project
 

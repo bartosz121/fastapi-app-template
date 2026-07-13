@@ -10,12 +10,13 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
-from todo_api.core.exceptions import Conflict, NotFound, TodoApiError
+from todo_api.core.database.exceptions import (
+    DatabaseOperationError,
+    IntegrityConstraintError,
+    RecordNotFoundError,
+)
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
-
-
-class ServiceError(TodoApiError): ...
 
 
 class OrderBy(NamedTuple):
@@ -29,10 +30,10 @@ def sql_error_handler() -> Generator[None]:
         yield
     except IntegrityError as exc:
         logger.error(f"Database integrity error: {exc}", exc_info=True)
-        raise Conflict() from exc
+        raise IntegrityConstraintError() from exc
     except SQLAlchemyError as exc:
         logger.error(f"Database error during operation: {exc}", exc_info=True)
-        raise ServiceError() from exc
+        raise DatabaseOperationError() from exc
 
 
 T = TypeVar("T")
@@ -50,7 +51,7 @@ class SQLAlchemyService:
             result = await self.session.execute(statement)
             instance = result.scalar_one_or_none()
             if instance is None:
-                raise NotFound(detail="No record found")
+                raise RecordNotFoundError(detail="No record found")
             return instance
 
     async def execute_one_or_none[V](self, statement: Select[tuple[V]]) -> V | None:
@@ -123,7 +124,7 @@ class SQLAlchemyModelService[T, U]:
         logger.error(
             f"Strategy must be 'add' or handled within async methods like 'update', found:{strategy!r}"
         )
-        raise ServiceError()
+        raise DatabaseOperationError()
 
     async def _flush_or_commit(self, auto_commit: bool | None = None) -> None:
         auto_commit_ = self.auto_commit if auto_commit is None else auto_commit
@@ -208,7 +209,7 @@ class SQLAlchemyModelService[T, U]:
     def check_not_found(self, item: T | None) -> T:
         if item is None:
             msg = "No record found"
-            raise NotFound(detail=msg)
+            raise RecordNotFoundError(detail=msg)
         return item
 
     async def count(self, statement: Select[tuple[T]] | None = None, **kwargs: Any) -> int:

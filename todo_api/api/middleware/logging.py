@@ -2,7 +2,7 @@ import structlog
 from opentelemetry import trace
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from todo_api.core.middleware.request_id import request_id_ctx
+from todo_api.api.middleware.request_id import request_id_ctx
 
 
 class LoggingMiddleware:

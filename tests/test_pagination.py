@@ -1,4 +1,4 @@
-from todo_api.core import pagination
+from todo_api.api import pagination
 
 
 def test_paginated_calculates_pages():

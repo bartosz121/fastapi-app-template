@@ -75,6 +75,7 @@ mccabe = { max-complexity = 15 }
 # `Missing return type annotation for public function`
 # I prefer `response_model` over endpoint function return type hint
 "**/router.py" = ["ANN201"]
+"**/routers/*.py" = ["ANN201"]
 "tests/**" = ["ANN201", "ANN202"]
 
 [tool.pyright]

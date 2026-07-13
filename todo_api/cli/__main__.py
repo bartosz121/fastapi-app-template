@@ -22,20 +22,33 @@ def add_package(args: argparse.Namespace) -> None:
 
     env = Environment(loader=FileSystemLoader(str(Path(__file__).parent / "templates")))
 
-    # Create package directory
+    # Feature packages contain HTTP-independent models and services.
     package_dir = Path(root_package) / module_name
     if package_dir.exists():
         log.error(f"Directory {package_dir} already exists.")
         return
     package_dir.mkdir(parents=True)
 
-    for template_name in env.list_templates(filter_func=lambda x: not x.startswith("test_")):
-        template = env.get_template(template_name)
-        content = template.render(package_name=module_name, root_package=root_package)
-        file_name = template_name.replace(".j2", "")
-        (package_dir / file_name).write_text(content)
+    api_package_dir = Path(root_package) / "api"
+    api_paths = {
+        "dependencies.py.j2": api_package_dir / "dependencies" / f"{module_name}.py",
+        "schemas.py.j2": api_package_dir / "schemas" / f"{module_name}.py",
+        "router.py.j2": api_package_dir / "routers" / f"{module_name}.py",
+    }
+    feature_paths = {
+        "__init__.py.j2": package_dir / "__init__.py",
+        "models.py.j2": package_dir / "models.py",
+        "service.py.j2": package_dir / "service.py",
+    }
 
-    log.info(f"Package {module_name} created successfully in {package_dir}.")
+    for template_name, output_path in {**feature_paths, **api_paths}.items():
+        template = env.get_template(template_name)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
+            template.render(package_name=module_name, root_package=root_package)
+        )
+
+    log.info(f"Feature package {module_name} and its API adapter created successfully.")
 
     # Create test directory
     test_dir = Path(f"tests/{module_name}s")
@@ -48,14 +61,14 @@ def add_package(args: argparse.Namespace) -> None:
 
     log.info(f"Tests for {module_name} created successfully in {test_dir}.")
 
-    # Modify api.py to include the new router
-    api_py_path = Path(root_package) / "api.py"
+    # Register the generated HTTP router in the API adapter.
+    api_py_path = Path(root_package) / "api" / "router.py"
     if api_py_path.exists():
         content = api_py_path.read_text()
 
         # Add import
         import_stmt = (
-            f"from {root_package}.{module_name}.router import router as {module_name}_router"
+            f"from {root_package}.api.routers.{module_name} import router as {module_name}_router"
         )
         if import_stmt not in content:
             # Find the last import from root_package

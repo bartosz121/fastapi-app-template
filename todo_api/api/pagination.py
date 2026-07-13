@@ -11,13 +11,13 @@ from typing import (
 from fastapi import Depends, Query
 from pydantic import Field, model_validator
 
-from todo_api.core.exceptions import BadRequest
-from todo_api.core.schemas import BaseSchema
+from todo_api.api.exceptions import BadRequestError
+from todo_api.api.schemas.base import BaseSchema
 
 ModelT = TypeVar("ModelT")
 
 
-class PaginationError(BadRequest): ...
+class PaginationError(BadRequestError): ...
 
 
 class PaginationParams(NamedTuple):

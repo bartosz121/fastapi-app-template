@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 import structlog
 from fastapi import FastAPI
 
-from todo_api.core.middleware.logging import LoggingMiddleware
-from todo_api.core.middleware.prometheus import PrometheusMiddleware
-from todo_api.core.middleware.request_id import RequestIdMiddleware
+from todo_api.api.middleware.logging import LoggingMiddleware
+from todo_api.api.middleware.prometheus import PrometheusMiddleware
+from todo_api.api.middleware.request_id import RequestIdMiddleware
 
 if TYPE_CHECKING:
     from todo_api.core.config import Environment

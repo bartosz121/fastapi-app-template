@@ -1,16 +1,14 @@
-from {{ root_package }}.core.schemas import BaseSchema, BaseSchemaId, Timestamp
+from {{ root_package }}.api.schemas.base import BaseSchema, BaseSchemaId, Timestamp
 
 
 class {{ package_name | capitalize }}Base(BaseSchema):
     name: str
 
 
-class {{ package_name | capitalize }}Read(Timestamp, {{ package_name | capitalize }}Base, BaseSchemaId[int]):
-    pass
+class {{ package_name | capitalize }}Read(Timestamp, {{ package_name | capitalize }}Base, BaseSchemaId[int]): ...
 
 
-class {{ package_name | capitalize }}Create({{ package_name | capitalize }}Base):
-    pass
+class {{ package_name | capitalize }}Create({{ package_name | capitalize }}Base): ...
 
 
 class {{ package_name | capitalize }}Update(BaseSchema):

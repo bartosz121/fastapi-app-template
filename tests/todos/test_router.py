@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tests.fixtures.auth import AuthenticateAs
 from tests.fixtures.database import SaveModel
 from tests.fixtures.objects import create_user
-from todo_api.auth.dependencies import AnonymousUser
-from todo_api.core.exceptions import ErrorCode
+from todo_api.api.dependencies.auth import AnonymousUser
+from todo_api.api.exceptions import ErrorCode
 from todo_api.todos.models import Todo
 from todo_api.users.models import User
 

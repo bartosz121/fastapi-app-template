@@ -1,4 +1,4 @@
-from todo_api.core.schemas import BaseSchema, BaseSchemaId, Timestamp
+from todo_api.api.schemas.base import BaseSchema, BaseSchemaId, Timestamp
 
 
 class TodoBase(BaseSchema):

@@ -3,26 +3,20 @@ from typing import Annotated
 import structlog
 from fastapi import Depends, Request
 
-from todo_api.auth import service as auth_service
+from todo_api.api.auth import get_bearer_token
+from todo_api.api.dependencies.database import AsyncDbSession
+from todo_api.api.exceptions import UnauthorizedError
 from todo_api.auth.service import UserSessionService as UserSessionService_
-from todo_api.core.database.dependencies import AsyncDbSession
-from todo_api.core.exceptions import Unauthorized
 from todo_api.users.models import User
 from todo_api.utils import utc_now
 
 
 def get_auth_cookie_name(request: Request) -> str:
-    """
-    Get `auth_cookie_name` value from lifespan state
-    """
-    return request.state.auth_cookie_name  # main.State.auth_cookie_name
+    return request.state.auth_cookie_name
 
 
 def get_auth_cookie_domain(request: Request) -> str:
-    """
-    Get `auth_cookie_domain` value from lifespan state
-    """
-    return request.state.auth_cookie_domain  # main.State.auth_cookie_domain
+    return request.state.auth_cookie_domain
 
 
 def get_user_session_service(session: AsyncDbSession) -> UserSessionService_:
@@ -34,8 +28,7 @@ AuthCookieDomain = Annotated[str, Depends(get_auth_cookie_domain)]
 UserSessionService = Annotated[UserSessionService_, Depends(get_user_session_service)]
 
 
-class AnonymousUser:
-    pass
+class AnonymousUser: ...
 
 
 async def get_user_from_session(
@@ -43,22 +36,19 @@ async def get_user_from_session(
     auth_cookie_name: AuthCookieName,
     user_session_service: UserSessionService,
 ) -> User | AnonymousUser:
-    session_token = request.cookies.get(
-        auth_cookie_name
-    ) or auth_service.get_session_token_from_header(request.headers.get("Authorization", None))
+    session_token = request.cookies.get(auth_cookie_name) or get_bearer_token(
+        request.headers.get("Authorization")
+    )
 
     if session_token:
         user_session = await user_session_service.get_one_or_none(session_token=session_token)
-        if user_session:
-            if user_session.expires_at > utc_now():
-                return user_session.user
+        if user_session and user_session.expires_at > utc_now():
+            return user_session.user
 
     return AnonymousUser()
 
 
 class Authenticator:
-    allow_anonymous: bool
-
     def __init__(self, allow_anonymous: bool = False) -> None:
         self.allow_anonymous = allow_anonymous
 
@@ -67,7 +57,7 @@ class Authenticator:
     ) -> User | AnonymousUser:
         structlog.contextvars.bind_contextvars(user_id=user.id if isinstance(user, User) else None)
         if not self.allow_anonymous and isinstance(user, AnonymousUser):
-            raise Unauthorized()
+            raise UnauthorizedError()
         return user
 
 

@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import SecretStr
 
-from todo_api.core.schemas import BaseSchema, BaseSchemaId
+from todo_api.api.schemas.base import BaseSchema, BaseSchemaId
 
 
 class UserBase(BaseSchema):

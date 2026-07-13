@@ -10,8 +10,12 @@ from sqlalchemy.orm import InstrumentedAttribute, Mapped, mapped_column
 
 from tests.fixtures.database import SaveModel
 from todo_api.core.database.base import Model
-from todo_api.core.exceptions import Conflict, NotFound
-from todo_api.core.service.sqlalchemy import OrderBy, ServiceError, SQLAlchemyModelService
+from todo_api.core.database.exceptions import (
+    DatabaseOperationError,
+    IntegrityConstraintError,
+    RecordNotFoundError,
+)
+from todo_api.core.database.service import OrderBy, SQLAlchemyModelService
 
 DIALECT = postgresql.dialect()
 
@@ -81,7 +85,7 @@ async def test_get_one(session: AsyncSession, test_task: Task, save_model_fixtur
 async def test_get_one_not_found(session: AsyncSession):
     service = TaskService(session)
 
-    with pytest.raises(NotFound):
+    with pytest.raises(RecordNotFoundError):
         await service.get_one(id=999)
 
 
@@ -246,7 +250,7 @@ async def test_delete(session: AsyncSession, test_task: Task, save_model_fixture
 
     assert deleted_task.id == test_task.id
 
-    with pytest.raises(NotFound):
+    with pytest.raises(RecordNotFoundError):
         await service.get_one(id=test_task.id)
 
 
@@ -266,7 +270,7 @@ async def test_sql_error_handling_integrity_error(session: AsyncSession):
 
     # Mock session.execute to raise IntegrityError
     with patch.object(session, "execute", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore
-        with pytest.raises(Conflict):
+        with pytest.raises(IntegrityConstraintError):
             await service.get_one(id=1)
 
 
@@ -275,7 +279,7 @@ async def test_sql_error_handling_sqlalchemy_error(session: AsyncSession):
 
     # Mock session.execute to raise SQLAlchemyError
     with patch.object(session, "execute", side_effect=SQLAlchemyError("mock error")):
-        with pytest.raises(ServiceError):
+        with pytest.raises(DatabaseOperationError):
             await service.get_one(id=1)
 
 
@@ -291,7 +295,7 @@ async def test_sql_error_handling_attribute_error(session: AsyncSession):
 async def test_attach_to_session_invalid_strategy(session: AsyncSession, test_task: Task):
     service = TaskService(session)
 
-    with pytest.raises(ServiceError):
+    with pytest.raises(DatabaseOperationError):
         await service._attach_to_session(test_task, strategy="invalid")  # type: ignore
 
 
@@ -463,7 +467,7 @@ async def test_update_conflict_error(session: AsyncSession, test_task: Task):
     service = TaskService(session)
 
     with patch.object(session, "merge", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore
-        with pytest.raises(Conflict):
+        with pytest.raises(IntegrityConstraintError):
             await service.update(test_task)
 
 
@@ -472,7 +476,7 @@ async def test_update_with_session_error(session: AsyncSession, test_task: Task)
     service = TaskService(session)
 
     with patch.object(session, "merge", side_effect=SQLAlchemyError("mock error")):
-        with pytest.raises(ServiceError):
+        with pytest.raises(DatabaseOperationError):
             await service.update(test_task)
 
 
@@ -541,9 +545,9 @@ async def test_create_with_service_error(session: AsyncSession, test_task: Task)
     """Test create when an unexpected error occurs."""
     service = TaskService(session)
 
-    # Simulate a situation that would cause ServiceError via SQLAlchemyError
+    # A SQLAlchemy error is translated to a database operation error.
     with patch.object(service, "_flush_or_commit", side_effect=SQLAlchemyError("unexpected")):
-        with pytest.raises(ServiceError):
+        with pytest.raises(DatabaseOperationError):
             await service.create(test_task)
 
 

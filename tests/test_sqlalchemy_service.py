@@ -4,9 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from todo_api.core.database.base import Model
+from todo_api.core.database.exceptions import RecordNotFoundError
 from todo_api.core.database.mixins import TimestampMixin
-from todo_api.core.exceptions import NotFound
-from todo_api.core.service.sqlalchemy import SQLAlchemyService
+from todo_api.core.database.service import SQLAlchemyService
 
 
 class User_(TimestampMixin, Model):
@@ -45,7 +45,7 @@ async def test_execute_one_success(service: SQLAlchemyService, seeded_users: lis
 
 async def test_execute_one_not_found(service: SQLAlchemyService):
     stmt = select(User_).where(User_.id == 999)
-    with pytest.raises(NotFound):
+    with pytest.raises(RecordNotFoundError):
         await service.execute_one(stmt)
 
 

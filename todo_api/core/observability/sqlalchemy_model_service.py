@@ -10,7 +10,7 @@ from wrapt import (  # pyright: ignore[reportMissingTypeStubs]
     wrap_function_wrapper,  # pyright: ignore[reportUnknownVariableType]
 )
 
-from todo_api.core.service.sqlalchemy import SQLAlchemyModelService
+from todo_api.core.database.service import SQLAlchemyModelService
 from todo_api.version import __version__
 
 INSTRUMENTED_PUBLIC_METHODS = {
@@ -105,7 +105,7 @@ class SQLAlchemyModelServiceInstrumentator(BaseInstrumentor):
         return (f"todo_api == {__version__}",)
 
     def _instrument(self, **kwargs: Any) -> None:  # noqa: ANN401
-        """Instruments `todo_api.core.service.sqlalchemy.SQLAlchemyModelService`
+        """Instruments `todo_api.core.database.service.SQLAlchemyModelService`
 
         Args:
             **kwargs: Optional arguments
@@ -122,7 +122,7 @@ class SQLAlchemyModelServiceInstrumentator(BaseInstrumentor):
 
         for method_name in INSTRUMENTED_PUBLIC_METHODS:
             wrap_function_wrapper(
-                "todo_api.core.service.sqlalchemy",
+                "todo_api.core.database.service",
                 f"SQLAlchemyModelService.{method_name}",
                 partial(
                     self._async_method_wrapper,

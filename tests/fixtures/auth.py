@@ -41,7 +41,7 @@ import pytest
 import pytest_asyncio
 
 from tests.fixtures.database import SaveModel
-from todo_api.auth.dependencies import AnonymousUser
+from todo_api.api.dependencies.auth import AnonymousUser
 from todo_api.users.models import User
 from todo_api.users.security import get_password_hash
 

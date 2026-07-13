@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.fixtures.auth import AuthenticateAs
 from tests.fixtures.database import SaveModel
+from todo_api.api.config import api_settings
 from todo_api.auth.models import UserSession
 from todo_api.core.config import settings
 from todo_api.users.models import User
@@ -63,7 +64,7 @@ async def test_session_validation_with_cookie(
     await session.commit()
     await session.refresh(user_session)
 
-    client.cookies.set(settings.AUTH_COOKIE_NAME, user_session.session_token)
+    client.cookies.set(api_settings.AUTH_COOKIE_NAME, user_session.session_token)
 
     response = await client.get("/api/v1/users/me")
     assert response.status_code == status.HTTP_200_OK
@@ -112,7 +113,7 @@ async def test_expired_session_is_invalid(
     await session.commit()
     await session.refresh(user_session)
 
-    client.cookies.set(settings.AUTH_COOKIE_NAME, user_session.session_token)
+    client.cookies.set(api_settings.AUTH_COOKIE_NAME, user_session.session_token)
 
     response = await client.get("/api/v1/users/me")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -133,7 +134,7 @@ async def test_logout_deletes_session(
     assert login_response.status_code == status.HTTP_200_OK
 
     session_token = login_response.json()["token"]
-    client.cookies.set(settings.AUTH_COOKIE_NAME, session_token)
+    client.cookies.set(api_settings.AUTH_COOKIE_NAME, session_token)
 
     # Ensure session exists before logout
     initial_session = (

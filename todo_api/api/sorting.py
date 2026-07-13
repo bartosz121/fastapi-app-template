@@ -2,7 +2,7 @@ from typing import Annotated, Literal, cast
 
 from fastapi import Depends, Query
 
-from todo_api.core.service.sqlalchemy import OrderBy
+from todo_api.core.database.service import OrderBy
 
 
 def get_timestamp_order_by_params(

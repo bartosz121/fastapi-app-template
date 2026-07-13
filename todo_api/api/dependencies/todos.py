@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from todo_api.core.database.dependencies import AsyncDbSession
+from todo_api.api.dependencies.database import AsyncDbSession
 from todo_api.todos.service import TodoService as TodoService_
 
 

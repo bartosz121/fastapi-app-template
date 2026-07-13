@@ -1,7 +1,8 @@
 from fastapi import APIRouter, status
 
-from {{ root_package }}.core import exceptions
-from {{ root_package }}.{{ package_name }} import dependencies, schemas
+from {{ root_package }}.api.exceptions import ErrorResponse
+from {{ root_package }}.api.dependencies.{{ package_name }} import {{ package_name | capitalize }}Service
+from {{ root_package }}.api.schemas import {{ package_name }} as schemas
 from {{ root_package }}.{{ package_name }}.models import {{ package_name | capitalize }}
 
 router = APIRouter(prefix="/{{ package_name }}s", tags=["{{ package_name }}s"])
@@ -9,83 +10,54 @@ router = APIRouter(prefix="/{{ package_name }}s", tags=["{{ package_name }}s"])
 
 @router.get("", response_model=list[schemas.{{ package_name | capitalize }}Read])
 async def get_{{ package_name }}_list(
-    {{ package_name }}_service: dependencies.{{ package_name | capitalize }}Service,
+    {{ package_name }}_service: {{ package_name | capitalize }}Service,
 ):
-    return await {{ package_name }}_service.list_()
+    return await {{ package_name }}_service.list()
 
 
 @router.get(
     "/{id}",
     response_model=schemas.{{ package_name | capitalize }}Read,
-    responses={
-        404: {
-            "description": "Not Found",
-            "model": exceptions.NotFound.schema(),
-        },
-    },
+    responses={404: {"description": "Not Found", "model": ErrorResponse}},
 )
 async def get_{{ package_name }}_by_id(
     id: int,
-    {{ package_name }}_service: dependencies.{{ package_name | capitalize }}Service,
+    {{ package_name }}_service: {{ package_name | capitalize }}Service,
 ):
     return await {{ package_name }}_service.get_one(id=id)
 
 
-@router.post(
-    "",
-    status_code=status.HTTP_201_CREATED,
-    response_model=schemas.{{ package_name | capitalize }}Read,
-)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=schemas.{{ package_name | capitalize }}Read)
 async def create_{{ package_name }}(
     data: schemas.{{ package_name | capitalize }}Create,
-    {{ package_name }}_service: dependencies.{{ package_name | capitalize }}Service,
+    {{ package_name }}_service: {{ package_name | capitalize }}Service,
 ):
-    {{ package_name }} = {{ package_name | capitalize }}(**data.model_dump())
-    created_{{ package_name }} = await {{ package_name }}_service.create({{ package_name }})
-
-    return created_{{ package_name }}
+    return await {{ package_name }}_service.create({{ package_name | capitalize }}(**data.model_dump()))
 
 
 @router.put(
     "/{id}",
     response_model=schemas.{{ package_name | capitalize }}Read,
-    responses={
-        404: {
-            "description": "Not Found",
-            "model": exceptions.NotFound.schema(),
-        },
-    },
+    responses={404: {"description": "Not Found", "model": ErrorResponse}},
 )
 async def update_{{ package_name }}(
     id: int,
     data: schemas.{{ package_name | capitalize }}Update,
-    {{ package_name }}_service: dependencies.{{ package_name | capitalize }}Service,
+    {{ package_name }}_service: {{ package_name | capitalize }}Service,
 ):
-    {{ package_name }}_db = await {{ package_name }}_service.get_one(id=id)
-
-    update_data = data.model_dump(exclude_unset=True)
-    for k, v in update_data.items():
-        setattr({{ package_name }}_db, k, v)
-
-    updated_{{ package_name }} = await {{ package_name }}_service.update({{ package_name }}_db)
-
-    return updated_{{ package_name }}
+    {{ package_name }} = await {{ package_name }}_service.get_one(id=id)
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr({{ package_name }}, key, value)
+    return await {{ package_name }}_service.update({{ package_name }})
 
 
 @router.delete(
     "/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={
-        404: {
-            "description": "Not Found",
-            "model": exceptions.NotFound.schema(),
-        },
-    },
+    responses={404: {"description": "Not Found", "model": ErrorResponse}},
 )
 async def delete_{{ package_name }}(
     id: int,
-    {{ package_name }}_service: dependencies.{{ package_name | capitalize }}Service,
+    {{ package_name }}_service: {{ package_name | capitalize }}Service,
 ):
     await {{ package_name }}_service.delete(id)
-
-    return None

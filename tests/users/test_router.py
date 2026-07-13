@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.fixtures.auth import AuthenticateAs
 from tests.fixtures.database import SaveModel
-from todo_api.core.exceptions import ErrorCode
+from todo_api.api.exceptions import ErrorCode
 from todo_api.users import security
 from todo_api.users.models import User
 

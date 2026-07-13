@@ -48,11 +48,8 @@ class Settings(BaseSettings):
     OTLP_EXPORTER_INSECURE: bool = True
     SECRET: SecretStr = SecretStr("Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4")
     USER_SESSION_TTL: int = 24 * 31  # hours
-    AUTH_COOKIE_NAME: str = "todo_auth"
-    AUTH_COOKIE_DOMAIN: str = "127.0.0.1"
     JWT_EXPIRATION: int = 3600 * 72  # seconds
     PROMETHEUS_MULTIPROC_DIR: str | None = "/tmp/prometheus"
-    ALLOWED_ORIGINS: list[str] = ["*"]
 
     DB_HOST: str = "127.0.0.1"
     DB_DATABASE: str = "todo_api"

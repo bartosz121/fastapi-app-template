@@ -9,8 +9,8 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from todo_api.auth.dependencies import AnonymousUser, get_user_from_session
-from todo_api.core.database.dependencies import get_async_session
+from todo_api.api.dependencies.auth import AnonymousUser, get_user_from_session
+from todo_api.api.dependencies.database import get_async_session
 from todo_api.main import create_app
 from todo_api.users.models import User
 

@@ -13,7 +13,7 @@ async def test_logging_adds_trace_context(capsys: pytest.CaptureFixture[str]):
     from fastapi import FastAPI
 
     from todo_api.core.logging import configure as configure_logging
-    from todo_api.instrumentation import configure as configure_instrumentation
+    from todo_api.core.observability.instrumentation import configure as configure_instrumentation
 
     configure_instrumentation(
         app_name="test-app",
@@ -34,7 +34,7 @@ async def test_logging_adds_trace_context(capsys: pytest.CaptureFixture[str]):
         FastAPIInstrumentor,
     )
 
-    from todo_api.core.middleware.logging import LoggingMiddleware
+    from todo_api.api.middleware.logging import LoggingMiddleware
 
     app = FastAPI()
     app.add_middleware(LoggingMiddleware)
@@ -94,8 +94,8 @@ async def test_sqlalchemy_model_service_instrumentation_adds_attributes(engine: 
     from sqlalchemy.ext.asyncio import async_sessionmaker
     from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
-    from todo_api.core.service.sqlalchemy import SQLAlchemyModelService
-    from todo_api.opentelemetry.sqlalchemy_model_service import (
+    from todo_api.core.database.service import SQLAlchemyModelService
+    from todo_api.core.observability.sqlalchemy_model_service import (
         SQLAlchemyModelServiceInstrumentator,
     )
 
@@ -169,8 +169,8 @@ async def test_sqlalchemy_service_instrumentation_creates_spans(engine: AsyncEng
     from sqlalchemy.ext.asyncio import async_sessionmaker
     from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
-    from todo_api.core.service.sqlalchemy import SQLAlchemyService
-    from todo_api.opentelemetry.sqlalchemy_service import SQLAlchemyServiceInstrumentator
+    from todo_api.core.database.service import SQLAlchemyService
+    from todo_api.core.observability.sqlalchemy_service import SQLAlchemyServiceInstrumentator
 
     provider = trace.get_tracer_provider()
 

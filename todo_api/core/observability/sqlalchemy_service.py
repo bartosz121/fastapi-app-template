@@ -10,7 +10,7 @@ from wrapt import (  # pyright: ignore[reportMissingTypeStubs]
     wrap_function_wrapper,  # pyright: ignore[reportUnknownVariableType]
 )
 
-from todo_api.core.service.sqlalchemy import SQLAlchemyService
+from todo_api.core.database.service import SQLAlchemyService
 from todo_api.version import __version__
 
 INSTRUMENTED_PUBLIC_METHODS = {
@@ -40,7 +40,7 @@ class SQLAlchemyServiceInstrumentator(BaseInstrumentor):
 
         for method_name in INSTRUMENTED_PUBLIC_METHODS:
             wrap_function_wrapper(
-                "todo_api.core.service.sqlalchemy",
+                "todo_api.core.database.service",
                 f"SQLAlchemyService.{method_name}",
                 partial(
                     self._async_method_wrapper,

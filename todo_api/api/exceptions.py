@@ -5,6 +5,8 @@ from typing import Any, ClassVar
 from fastapi import status
 from pydantic import BaseModel
 
+from todo_api.core.exceptions import ApplicationError
+
 
 class ErrorCode(StrEnum):
     REQUEST_VALIDATION_ERROR = "REQUEST_VALIDATION_ERROR"
@@ -27,9 +29,7 @@ class ResponseValidationError(ErrorResponse):
     detail: None = None
 
 
-class ApiError(Exception):
-    """An error whose representation is part of the HTTP API contract."""
-
+class ApiError(ApplicationError):
     status_code: ClassVar[int] = status.HTTP_500_INTERNAL_SERVER_ERROR
 
     def __init__(
@@ -44,7 +44,7 @@ class ApiError(Exception):
         self.code = code
         self.detail = detail
         self.headers = headers
-        super().__init__(detail)
+        super().__init__(detail, code=code)
 
     def to_response(self) -> ErrorResponse:
         return ErrorResponse(error=self.error, code=self.code, detail=self.detail)

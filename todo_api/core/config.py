@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     SECRET: SecretStr = SecretStr("Q3VmtUkDnRt17XmYdodWHC_laJ1sOFeyof7bgGP1RC4")
     USER_SESSION_TTL: int = 24 * 31  # hours
     JWT_EXPIRATION: int = 3600 * 72  # seconds
-    PROMETHEUS_MULTIPROC_DIR: str | None = "/tmp/prometheus"
+    PROMETHEUS_MULTIPROC_DIR: str | None = None
 
     DB_HOST: str = "127.0.0.1"
     DB_DATABASE: str = "todo_api"

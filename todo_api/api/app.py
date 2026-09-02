@@ -69,7 +69,11 @@ def create_app() -> FastAPI:
         },
     )
 
-    configure_middleware(app, settings.ENVIRONMENT)
+    configure_middleware(
+        app,
+        prometheus_enabled=settings.PROMETHEUS_ENABLED,
+        prometheus_multiproc_dir=settings.PROMETHEUS_MULTIPROC_DIR,
+    )
     configure_exception_handlers(app)
 
     cors_origins = ["*"] if settings.ENVIRONMENT.is_development else api_settings.ALLOWED_ORIGINS

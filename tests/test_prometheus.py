@@ -1,14 +1,15 @@
 from collections.abc import Mapping
 
 import httpx
-import pytest
 from fastapi import FastAPI, status
-from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, Gauge
+from prometheus_client import REGISTRY, Gauge
 from prometheus_client.parser import text_string_to_metric_families
 
+from todo_api.api.middleware import configure as configure_middleware
+from todo_api.api.middleware.configure import (
+    _create_prometheus_app,  # pyright: ignore[reportPrivateUsage]
+)
 from todo_api.api.middleware.prometheus import PrometheusMiddleware
-from todo_api.api.router import router_v1
-from todo_api.core.config import settings
 
 
 def get_registry_value(metric_name: str, labels: Mapping[str, str]) -> float:
@@ -96,23 +97,33 @@ async def test_prometheus_middleware_records_unhandled_exception():
     assert get_registry_value("todo_api_requests_in_progress", labels) == 0
 
 
-async def test_metrics_endpoint_returns_prometheus_exposition(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(settings, "PROMETHEUS_MULTIPROC_DIR", None)
+async def test_configure_mounts_metrics_when_prometheus_is_enabled():
+    app = FastAPI()
+    configure_middleware(app, prometheus_enabled=True)
 
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/metrics/")
+
+    assert response.status_code == status.HTTP_200_OK
+
+
+async def test_metrics_endpoint_returns_prometheus_exposition():
     metric = Gauge("test_metrics_endpoint_value", "Value used by the metrics endpoint test")
     metric.set(7)
 
     app = FastAPI()
-    app.include_router(router_v1, prefix="/api")
+    app.mount("/metrics", _create_prometheus_app(None), name="prometheus")
 
     try:
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://test"
         ) as client:
-            response = await client.get("/api/v1/metrics")
+            response = await client.get("/metrics/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.headers["content-type"] == CONTENT_TYPE_LATEST
+        assert response.headers["content-type"].startswith("text/plain; version=")
 
         families = {
             family.name: family for family in text_string_to_metric_families(response.text)

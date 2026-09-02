@@ -7,24 +7,24 @@ authors = [{ name = "bartosz121", email = "bmagiera121@gmail.com" }]
 readme = "README.md"
 dependencies = [
     "fastapi==0.123.9",
-    "argon2-cffi>=25.1.0,<26",
-    "passlib>=1.7.4,<1.8",
-    "prometheus-client>=0.23.1,<0.24",
-    "pydantic-settings>=2.12.0,<3",
-    "sqlalchemy[asyncio]>=2.0.44,<3",
-    "structlog>=25.5.0,<26",
-    "aiosqlite>=0.21.0,<0.22",
-    "alembic>=1.17.2,<1.18",
-    "poethepoet>=0.38.0,<0.39",
-    "granian[reload,uvloop]>=2.6.0,<3",
-    "opentelemetry-api>=1.39.0,<2",
-    "opentelemetry-sdk>=1.39.0,<2",
-    "opentelemetry-semantic-conventions>=0.60b0,<1",
-    "opentelemetry-instrumentation-fastapi>=0.60b0,<1",
-    "opentelemetry-instrumentation-sqlalchemy>=0.60b0,<1",
-    "opentelemetry-exporter-otlp>=1.39.0,<2",
-    "wrapt>=1.17.3,<2",
-    "psycopg[c]>=3.3.3,<4",
+    "argon2-cffi==25.1.0",
+    "passlib==1.7.4",
+    "prometheus-client==0.23.1",
+    "pydantic-settings==2.12.0",
+    "sqlalchemy[asyncio]==2.0.44",
+    "structlog==25.5.0",
+    "aiosqlite==0.21.0",
+    "alembic==1.17.2",
+    "poethepoet==0.38.0",
+    "granian[reload,uvloop]==2.6.0",
+    "opentelemetry-api==1.39.0",
+    "opentelemetry-sdk==1.39.0",
+    "opentelemetry-semantic-conventions==0.60b0",
+    "opentelemetry-instrumentation-fastapi==0.60b0",
+    "opentelemetry-instrumentation-sqlalchemy==0.60b0",
+    "opentelemetry-exporter-otlp==1.39.0",
+    "wrapt==1.17.3",
+    "psycopg[c]==3.3.5",
 ]
 
 
@@ -52,6 +52,9 @@ dev = [
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.uv]
+exclude-newer = "1 week"
 
 [tool.hatch.version]
 source = "vcs"

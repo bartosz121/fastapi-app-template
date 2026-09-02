@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import TypedDict, cast
 
@@ -32,7 +32,7 @@ class State(TypedDict):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[State]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[State]:
     yield {
         "auth_cookie_name": api_settings.AUTH_COOKIE_NAME,
         "auth_cookie_domain": api_settings.AUTH_COOKIE_DOMAIN,

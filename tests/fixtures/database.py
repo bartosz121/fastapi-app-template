@@ -1,6 +1,6 @@
 # pyright: reportUnknownVariableType=false, reportMissingTypeStubs=false
 import os
-from collections.abc import AsyncGenerator, Callable, Coroutine, Iterator
+from collections.abc import AsyncGenerator, Callable, Coroutine, Generator
 from contextlib import contextmanager
 from typing import Any
 from uuid import uuid4
@@ -35,7 +35,7 @@ def _get_template_database_name() -> str:
 
 
 @contextmanager
-def _admin_connection() -> Iterator[Connection]:
+def _admin_connection() -> Generator[Connection]:
     """`admin` is the connection used for database-level Postgres commands"""
     engine = create_engine(_get_admin_database_dsn(), isolation_level="AUTOCOMMIT")
     try:

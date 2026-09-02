@@ -14,7 +14,7 @@ from todo_api.core.exceptions import ApplicationError
 
 
 @pytest.mark.asyncio
-async def test_request_validation_error_handler(client: httpx.AsyncClient):
+async def test_request_validation_error_handler():
     class Item(BaseModel):
         name: str
         price: float
@@ -44,7 +44,7 @@ async def test_request_validation_error_handler(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_response_validation_error_handler(client: httpx.AsyncClient):
+async def test_response_validation_error_handler():
     class Item(BaseModel):
         name: str
         price: float
@@ -71,7 +71,7 @@ async def test_response_validation_error_handler(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_database_error_handlers(client: httpx.AsyncClient):
+async def test_database_error_handlers():
     app = FastAPI()
 
     @app.get("/not-found")

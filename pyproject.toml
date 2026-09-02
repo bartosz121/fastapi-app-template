@@ -31,7 +31,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ruff==0.16.5",
-    "pyright>=1.1.407",
+    "pyright==1.1.411",
     "pytest>=9.0.1,<10",
     "pytest-cov>=7.0.0,<8",
     "pytest-mock>=3.15.0,<4",
@@ -83,7 +83,12 @@ pythonVersion = "3.14"
 typeCheckingMode = "strict"
 reportUnnecessaryTypeIgnoreComment = true
 venvPath = ".venv"
-exclude = ["todo_api/version.py", ".venv"]
+exclude = [
+    "todo_api/version.py",
+    ".venv",
+    "**/__pycache____",
+    "**/.pytest_cache__",
+]
 
 [tool.coverage.report]
 exclude_lines = [

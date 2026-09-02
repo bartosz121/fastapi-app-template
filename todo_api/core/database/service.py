@@ -29,10 +29,10 @@ def sql_error_handler() -> Generator[None]:
     try:
         yield
     except IntegrityError as exc:
-        logger.error(f"Database integrity error: {exc}", exc_info=True)
+        logger.exception("Database integrity error")
         raise IntegrityConstraintError() from exc
     except SQLAlchemyError as exc:
-        logger.error(f"Database error during operation: {exc}", exc_info=True)
+        logger.exception("Database error during operation")
         raise DatabaseOperationError() from exc
 
 

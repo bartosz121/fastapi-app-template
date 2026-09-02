@@ -74,7 +74,7 @@ class PrometheusMiddleware:
         except BaseException as exc:
             status_code = "500"
             EXCEPTIONS.labels(method=method, path=path, exception_type=type(exc).__name__).inc()
-            raise exc
+            raise
         else:
             duration = time.perf_counter() - t0
             REQUESTS_PROCESS_TIME.labels(

@@ -52,8 +52,10 @@ async def app(
 
 @pytest_asyncio.fixture
 async def client(app: FastAPI) -> AsyncGenerator[httpx.AsyncClient]:
-    async with LifespanManager(app) as manager:
-        async with httpx.AsyncClient(
+    async with (
+        LifespanManager(app) as manager,
+        httpx.AsyncClient(
             transport=httpx.ASGITransport(app=manager.app), base_url="http://test"
-        ) as client:
-            yield client
+        ) as client,
+    ):
+        yield client

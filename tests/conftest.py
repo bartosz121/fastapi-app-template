@@ -49,4 +49,4 @@ os.environ["ENVIRONMENT"] = "TESTING"
 os.environ["DB_TEMPLATE_DATABASE"] = _build_template_database_name(BASE_TEST_DATABASE)
 
 
-from tests.fixtures import *  # noqa: E402, F403
+from tests.fixtures import *

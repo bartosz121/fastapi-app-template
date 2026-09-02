@@ -108,7 +108,7 @@ async def test_sqlalchemy_model_service_instrumentation_adds_attributes(engine: 
     # Clean up any previous instrumentation and instrument
     try:
         SQLAlchemyModelServiceInstrumentator().uninstrument()
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
 
     SQLAlchemyModelServiceInstrumentator().instrument(tracer_provider=provider)
@@ -180,7 +180,7 @@ async def test_sqlalchemy_service_instrumentation_creates_spans(engine: AsyncEng
 
     try:
         SQLAlchemyServiceInstrumentator().uninstrument()
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
 
     SQLAlchemyServiceInstrumentator().instrument(tracer_provider=provider)

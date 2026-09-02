@@ -16,7 +16,7 @@ class DatabaseOperationError(DatabaseError): ...
 
 __all__ = (
     "DatabaseError",
-    "RecordNotFoundError",
-    "IntegrityConstraintError",
     "DatabaseOperationError",
+    "IntegrityConstraintError",
+    "RecordNotFoundError",
 )

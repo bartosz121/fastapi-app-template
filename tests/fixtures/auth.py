@@ -87,7 +87,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
             for arg in args:
                 if not isinstance(arg, AuthenticateAs):
-                    raise ValueError(
+                    raise TypeError(
                         f"auth marker arguments must be of type 'AuthenticateAs', got {type(arg)}"
                     )
                 pytest_params.append(pytest.param(arg, id=repr(arg)))  # type: ignore

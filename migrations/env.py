@@ -1,4 +1,3 @@
-# ruff: noqa: F403
 # pyright: reportUnusedImport=false
 
 import asyncio

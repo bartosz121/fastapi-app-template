@@ -269,7 +269,7 @@ async def test_sql_error_handling_integrity_error(session: AsyncSession):
     service = TaskService(session)
 
     # Mock session.execute to raise IntegrityError
-    with patch.object(session, "execute", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore
+    with patch.object(session, "execute", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore  # noqa: SIM117
         with pytest.raises(IntegrityConstraintError):
             await service.get_one(id=1)
 
@@ -278,7 +278,7 @@ async def test_sql_error_handling_sqlalchemy_error(session: AsyncSession):
     service = TaskService(session)
 
     # Mock session.execute to raise SQLAlchemyError
-    with patch.object(session, "execute", side_effect=SQLAlchemyError("mock error")):
+    with patch.object(session, "execute", side_effect=SQLAlchemyError("mock error")):  # noqa: SIM117
         with pytest.raises(DatabaseOperationError):
             await service.get_one(id=1)
 
@@ -287,7 +287,7 @@ async def test_sql_error_handling_attribute_error(session: AsyncSession):
     """Test that AttributeError is not caught by sql_error_handler (programming errors should propagate)."""
     service = TaskService(session)
 
-    with patch.object(service, "_get_model_id_attr", side_effect=AttributeError("mock error")):
+    with patch.object(service, "_get_model_id_attr", side_effect=AttributeError("mock error")):  # noqa: SIM117
         with pytest.raises(AttributeError):
             await service.count(id=1)
 
@@ -466,7 +466,7 @@ async def test_update_conflict_error(session: AsyncSession, test_task: Task):
     """Test update when integrity error occurs."""
     service = TaskService(session)
 
-    with patch.object(session, "merge", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore
+    with patch.object(session, "merge", side_effect=IntegrityError("mock", "mock", "mock")):  # type: ignore  # noqa: SIM117
         with pytest.raises(IntegrityConstraintError):
             await service.update(test_task)
 
@@ -475,7 +475,7 @@ async def test_update_with_session_error(session: AsyncSession, test_task: Task)
     """Test update when a general SQLAlchemy error occurs."""
     service = TaskService(session)
 
-    with patch.object(session, "merge", side_effect=SQLAlchemyError("mock error")):
+    with patch.object(session, "merge", side_effect=SQLAlchemyError("mock error")):  # noqa: SIM117
         with pytest.raises(DatabaseOperationError):
             await service.update(test_task)
 
@@ -527,7 +527,7 @@ async def test_sql_error_handler_unknown_exception(session: AsyncSession):
     class CustomException(Exception):
         pass
 
-    with patch.object(session, "execute", side_effect=CustomException("unexpected error")):
+    with patch.object(session, "execute", side_effect=CustomException("unexpected error")):  # noqa: SIM117
         with pytest.raises(CustomException):  # Should not be caught by sql_error_handler
             await service.get_one(id=1)
 
@@ -546,7 +546,7 @@ async def test_create_with_service_error(session: AsyncSession, test_task: Task)
     service = TaskService(session)
 
     # A SQLAlchemy error is translated to a database operation error.
-    with patch.object(service, "_flush_or_commit", side_effect=SQLAlchemyError("unexpected")):
+    with patch.object(service, "_flush_or_commit", side_effect=SQLAlchemyError("unexpected")):  # noqa: SIM117
         with pytest.raises(DatabaseOperationError):
             await service.create(test_task)
 

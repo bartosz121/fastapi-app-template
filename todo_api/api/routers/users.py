@@ -118,7 +118,7 @@ async def logout(
     auth_cookie_domain: AuthCookieDomain,
     user_session_service: UserSessionService,
 ):
-    if session_token := request.cookies.get(auth_cookie_name):
+    if session_token := request.cookies.get(auth_cookie_name):  # noqa: SIM102
         if user_session := await user_session_service.get_one_or_none(session_token=session_token):
             await user_session_service.delete(user_session.id, auto_commit=True)
 

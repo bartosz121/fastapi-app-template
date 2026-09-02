@@ -75,7 +75,7 @@ def _extract_attributes_from_public_methods(
         if hasattr(data, "id"):
             try:
                 attrs["record_id"] = str(data.id)
-            except (AttributeError, TypeError):
+            except AttributeError, TypeError:
                 pass
 
     # Extract session behavior overrides

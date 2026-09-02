@@ -53,7 +53,11 @@ class Authenticator:
         self.allow_anonymous = allow_anonymous
 
     async def __call__(
-        self, user: User | AnonymousUser = Depends(get_user_from_session)
+        self,
+        user: Annotated[
+            User | AnonymousUser,
+            Depends(get_user_from_session),
+        ],
     ) -> User | AnonymousUser:
         structlog.contextvars.bind_contextvars(user_id=user.id if isinstance(user, User) else None)
         if not self.allow_anonymous and isinstance(user, AnonymousUser):

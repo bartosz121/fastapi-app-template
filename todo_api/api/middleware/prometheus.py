@@ -75,11 +75,10 @@ class PrometheusMiddleware:
             status_code = "500"
             EXCEPTIONS.labels(method=method, path=path, exception_type=type(exc).__name__).inc()
             raise
-        else:
+        finally:
             duration = time.perf_counter() - t0
             REQUESTS_PROCESS_TIME.labels(
                 method=method, path=path, status_code=status_code
             ).observe(duration)
-        finally:
             RESPONSES.labels(method=method, path=path, status_code=status_code).inc()
             REQUESTS_IN_PROGRESS.labels(method=method, path=path).dec()

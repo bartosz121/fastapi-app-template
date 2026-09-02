@@ -1,5 +1,4 @@
 {
-  "editor.fontSize": 16,
   "editor.rulers": [99],
   "search.exclude": {
     "**/node_modules": true,
@@ -10,5 +9,19 @@
     "**/.ruff_cache": true,
     "**/.pytest_cache": true,
     "**/__pycache__": true
-  }
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+  "python.analysis.diagnosticsSource": "Pylance + Pyright",
+  "python.analysis.pyrightVersion": "1.1.411"
 }

@@ -114,7 +114,13 @@ filterwarnings = [
     # This happens because the app is initialized for each test, which is fine for testing
     "ignore:Repeated configuration attempted:RuntimeWarning:todo_api.core.logging",
 ]
-env = ["ENVIRONMENT=TESTING", "DB_DATABASE=todo_api_test"]
+env = [
+    "ENVIRONMENT=TESTING",
+    "DB_DATABASE=todo_api_test",
+    "PROMETHEUS_ENABLED=false",
+    "U:PROMETHEUS_MULTIPROC_DIR=",
+    "U:prometheus_multiproc_dir=",
+]
 
 [tool.poe.tasks]
 format = { shell = "ruff format . && ruff check --fix ." }

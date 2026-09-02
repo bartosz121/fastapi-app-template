@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "DEBUG"
     ENABLED_LOGGERS: list[str] = ["granian", "sqlalchemy", "opentelemetry"]
 
+    PROMETHEUS_ENABLED: bool = True
     OTEL_ENABLED: bool = True
     OTLP_GRPC_ENDPOINT: str = "127.0.0.1:4317"
     OTLP_EXPORTER_INSECURE: bool = True

@@ -11,7 +11,7 @@ dependencies = [
     "passlib==1.7.4",
     "prometheus-client==0.26.0",
     "pydantic-settings==2.15.0",
-    "sqlalchemy[asyncio]==2.0.44",
+    "sqlalchemy[asyncio]==2.0.52",
     "structlog==26.1.0",
     "alembic==1.19.1",
     "poethepoet==0.48.0",

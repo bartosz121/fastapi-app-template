@@ -10,7 +10,7 @@ dependencies = [
     "argon2-cffi==25.1.0",
     "passlib==1.7.4",
     "prometheus-client==0.26.0",
-    "pydantic-settings==2.12.0",
+    "pydantic-settings==2.15.0",
     "sqlalchemy[asyncio]==2.0.44",
     "structlog==25.5.0",
     "aiosqlite==0.21.0",

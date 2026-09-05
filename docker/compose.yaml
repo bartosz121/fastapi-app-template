@@ -40,8 +40,14 @@ services:
       - 0.0.0.0
       - --port
       - "8000"
+      - "--metrics"
+      - "--metrics-address"
+      - "0.0.0.0"
+      - "--metrics-port"
+      - "9090"
     ports:
       - "8000:8000"
+      - "9090:9090"
     depends_on:
       postgres:
         condition: service_healthy

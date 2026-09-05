@@ -39,7 +39,7 @@ dev = [
     "coverage[toml]==7.16.0",
     "faker==40.38.0",
     "hypothesis==6.167.1",
-    "types-passlib>=1.7.7.20250602",
+    "types-passlib==1.7.7.20260211",
     "sqlalchemy-utils==0.42.1",
     "httpx>=0.28.1,<0.29",
     "pytest-asyncio==1.4.0",

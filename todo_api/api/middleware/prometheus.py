@@ -1,5 +1,7 @@
 import time
 
+import structlog
+from fastapi.routing import iter_route_contexts
 from prometheus_client import Counter, Gauge, Histogram
 from starlette.requests import Request
 from starlette.routing import Match
@@ -34,18 +36,20 @@ REQUESTS_IN_PROGRESS = Gauge(
     ["method", "path"],
 )
 
+logger: structlog.stdlib.BoundLogger = structlog.get_logger()
+
 
 class PrometheusMiddleware:
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
     @staticmethod
-    def get_route_path_string(request: Request) -> str:
-        for route in request.app.routes:
-            match, _ = route.matches(request.scope)
+    def get_route_path_string(request: Request) -> str | None:
+        for route_context in iter_route_contexts(request.app.routes):
+            match, _ = route_context.matches(request.scope)
             if match == Match.FULL:
-                return route.path
-        return request.url.path
+                return route_context.path
+        return None
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] not in {"http"}:
@@ -65,6 +69,15 @@ class PrometheusMiddleware:
         request = Request(scope)
         method = request.method
         path = self.get_route_path_string(request)
+
+        if path is None:
+            logger.warning(
+                "Could not resolve route path for metrics; skipping",
+                method=method,
+                path=request.url.path,
+            )
+            await self.app(scope, receive, send)
+            return
 
         REQUESTS_IN_PROGRESS.labels(method=method, path=path).inc()
         REQUESTS.labels(method=method, path=path).inc()

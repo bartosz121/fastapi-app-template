@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 
 import httpx
-from fastapi import FastAPI, status
+from fastapi import APIRouter, FastAPI, status
 from prometheus_client import REGISTRY, Gauge
 from prometheus_client.parser import text_string_to_metric_families
 
@@ -56,6 +56,41 @@ async def test_prometheus_middleware_records_successful_request():
         == histogram_count_before + 1
     )
     assert get_registry_value("todo_api_requests_in_progress", labels) == 0
+
+
+async def test_prometheus_middleware_handles_nested_router():
+    """
+    As of FastAPI 0.137 routes from child routers added with `include_router`
+    are no longer flattened into `app.routes`, triggering:
+
+    ```
+    AttributeError: '_IncludedRouter' object has no attribute 'path'
+    ```
+    """
+    app = FastAPI()
+    app.add_middleware(PrometheusMiddleware)
+
+    child_router = APIRouter()
+
+    @child_router.get("/items/{item_id}")
+    async def get_item(item_id: int) -> dict[str, int]:  # pyright: ignore[reportUnusedFunction]
+        return {"id": item_id}
+
+    parent_router = APIRouter()
+    parent_router.include_router(child_router)
+    app.include_router(parent_router, prefix="/api")
+
+    labels = {"method": "GET", "path": "/api/items/{item_id}"}
+    request_count_before = get_registry_value("todo_api_requests_total", labels)
+
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/api/items/42")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"id": 42}
+    assert get_registry_value("todo_api_requests_total", labels) == request_count_before + 1
 
 
 async def test_prometheus_middleware_records_unhandled_exception():

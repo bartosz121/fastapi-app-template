@@ -1,0 +1,36 @@
+# Configuration file for `prek`, a git hook framework written in Rust.
+# See https://prek.j178.dev for more information.
+#:schema https://www.schemastore.org/prek.json
+
+[[repos]]
+repo = "builtin"
+hooks = [
+    { id = "trailing-whitespace" },
+    { id = "end-of-file-fixer" },
+    { id = "check-added-large-files" },
+]
+
+# Use Poe tasks so the command definitions stay centralized in pyproject.toml.
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "format"
+name = "format"
+language = "system"
+entry = "uv run poe format"
+types = ["python"]
+
+[[repos.hooks]]
+id = "lint"
+name = "lint"
+language = "system"
+entry = "uv run poe lint"
+types = ["python"]
+
+[[repos.hooks]]
+id = "typecheck"
+name = "typecheck"
+language = "system"
+entry = "uv run poe typecheck"
+types = ["python"]

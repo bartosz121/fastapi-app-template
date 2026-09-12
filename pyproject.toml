@@ -122,8 +122,8 @@ env = [
 ]
 
 [tool.poe.tasks]
-format = { shell = "ruff format . && ruff check --fix ." }
-lint = { shell = "ruff format --check . && ruff check ." }
-typecheck = "pyright --warnings ."
+format = { shell = "ruff format $POE_EXTRA_ARGS && ruff check --fix $POE_EXTRA_ARGS" }
+lint = { shell = "ruff format --check $POE_EXTRA_ARGS && ruff check $POE_EXTRA_ARGS" }
+typecheck = "pyright --warnings $POE_EXTRA_ARGS"
 test = "pytest -vv -n auto"
 cli = "python -m todo_api.cli"

@@ -70,8 +70,6 @@ services:
       DB_DATABASE: todo_api
       DB_USER: todo_api
       DB_PASSWORD: todo_api
-    volumes:
-      - /tmp/prometheus:/tmp/prometheus
     restart: unless-stopped
     healthcheck:
       test:

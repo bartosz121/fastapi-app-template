@@ -1,4 +1,5 @@
 from fastapi import APIRouter, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.requests import Request
 from fastapi.responses import Response
 
@@ -54,8 +55,10 @@ async def login(
         raise ForbiddenError(code=exceptions.ErrorCode.ALREADY_LOGGED_IN)
 
     user = await user_service.get_one_or_none(username=data.username)
-    if not user or not security.verify_password(
-        data.password.get_secret_value(), user.hashed_password
+    if not user or not await run_in_threadpool(
+        security.verify_password,
+        data.password.get_secret_value(),
+        user.hashed_password,
     ):
         raise UnauthorizedError(
             detail="Invalid username or password",
@@ -103,10 +106,11 @@ async def register(
             code=exceptions.ErrorCode.USERNAME_EXISTS,
         )
 
-    user = User(
-        username=data.username,
-        hashed_password=security.get_password_hash(data.password.get_secret_value()),
+    hashed_password = await run_in_threadpool(
+        security.get_password_hash,
+        data.password.get_secret_value(),
     )
+    user = User(username=data.username, hashed_password=hashed_password)
     return await user_service.create(user)
 
 
